@@ -1,0 +1,6 @@
+pybufr (0.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 12 Oct 2009 12:11:58 +0200
+

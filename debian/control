@@ -1,0 +1,12 @@
+Source: pybufr
+Section: misc
+Priority: extra
+Maintainer: Kristian Rune Larsen <krl@dmi.dk>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: pybufr
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: DMI/TI Generic BUFR decoding python module
+ Based on the ECMWF BUFR library. 

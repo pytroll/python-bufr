@@ -1,0 +1,1 @@
+shlibs:Depends=libgfortran2 (>= 4.2.1), libc6 (>= 2.4)
