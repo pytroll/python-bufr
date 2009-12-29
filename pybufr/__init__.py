@@ -8,3 +8,4 @@
 Reads all BUFR files supported by the ECMWF library 
 
 """
+from BUFRFile import *
