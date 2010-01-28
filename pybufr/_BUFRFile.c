@@ -47,40 +47,6 @@ extern void bufrex_(int *,
                     char *, 
                     int *);
 
-/* Helper functions */
-int trim( char* str ) {
-
-	/* 
-	 * Get rid of trailing white-space characters, return number of removed characters
-	 */
-
-	char *p;
-	int n = 0;
-	size_t l = strlen( str );
-
-	if ( l > 0 )
-		for ( p = &str[l-1]; n < l && isspace( (int)*p ); --p, ++n )
-			*p = '\0';
-	return n;
-};
-
-void subst_space(char *str) {
-	/* Creates a NC identifier from the bufr entry name by substituting
-	   disallowed characters  with underscore. */
-
-	int n = 0;
-	while(str[n] != '\0'){
-		if (str[n]  == ' ' || 
-				str[n] == ')'  || 
-				str[n] == '('  || 
-				str[n] == '/'  || 
-				str[n] == '*'  ||
-				str[n] == '"'  ||
-				str[n] == '\\')
-			str[n] = '_';
-		n++;
-	}
-}
 
 int find_entry_type(double * data , int len) {
 	/* Figure out type double or int */
@@ -113,7 +79,7 @@ int collapse(double * data , int count ) {
  * BUFR File Exception Object
  * */
 
-static PyObject * BUFRFile_BUFRFileError;
+static PyObject * _BUFRFile_BUFRFileError;
 
 
 /*
@@ -129,13 +95,16 @@ typedef struct {
 	PyObject* name;     /* name */
 	PyObject* unit;     /* unit */
 	PyObject * data;  /* data array */
+	PyObject * index;  /* data array */
 
-} BUFRFile_BUFRFileEntryObject;
+
+} _BUFRFile_BUFRFileEntryObject;
 
 static PyMemberDef BUFRFileEntry_Members[] = {
-    {"name", T_OBJECT_EX, offsetof(BUFRFile_BUFRFileEntryObject, name), 0, "name"},
-    {"unit", T_OBJECT_EX, offsetof(BUFRFile_BUFRFileEntryObject, unit), 0, "unit"},
-    {"data", T_OBJECT_EX, offsetof(BUFRFile_BUFRFileEntryObject, data), 0, "data"},
+    {"name", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, name), 0, "name"},
+    {"unit", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, unit), 0, "unit"},
+    {"data", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, data), 0, "data"},
+    {"index", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, index), 0, "index"},
     {NULL},
     /* Sentinel */
 };
@@ -143,16 +112,17 @@ static PyMemberDef BUFRFileEntry_Members[] = {
 
 static PyObject *BUFRFileEntry_new(PyTypeObject *type, PyObject *args, PyObject *kw) {
 	/* Creates a new instance for a BUFRFile.BUFRFile object */
-	BUFRFile_BUFRFileEntryObject *self = (BUFRFile_BUFRFileEntryObject *) type->tp_alloc(type, 0);
+	_BUFRFile_BUFRFileEntryObject *self = (_BUFRFile_BUFRFileEntryObject *) type->tp_alloc(type, 0);
 	self->name = NULL;
 	self->unit = NULL;
 	self->data = NULL;
+	self->index = NULL;
 
 	return (PyObject *) self;
 }
 
 
-static void BUFRFileEntry_dealloc(BUFRFile_BUFRFileEntryObject *self) {
+static void BUFRFileEntry_dealloc(_BUFRFile_BUFRFileEntryObject *self) {
     my_ref--;
 	Py_XDECREF(self->data); 
 	Py_XDECREF(self->name);
@@ -160,24 +130,27 @@ static void BUFRFileEntry_dealloc(BUFRFile_BUFRFileEntryObject *self) {
 	self->ob_type->tp_free(self);
 }
 
-static int BUFRFileEntry_init(BUFRFile_BUFRFileEntryObject *self, PyObject *args, PyObject *kw) {
+static int BUFRFileEntry_init(_BUFRFile_BUFRFileEntryObject *self, PyObject *args, PyObject *kw) {
 
 	PyObject * data;
 	PyObject * name;
 	PyObject * unit;
+	PyObject * index;
 
-	if (!PyArg_ParseTuple(args, "OOO",&name, &unit, &data)) {
+	if (!PyArg_ParseTuple(args, "OOOO",&index, &name, &unit, &data)) {
 		return -1;
 	}
 	self->data = data;
 	self->name = name;
 	self->unit = unit;
+	self->index = index;
 
     my_ref++;
 
 	Py_XINCREF(self->data);
 	Py_XINCREF(self->unit);
 	Py_XINCREF(self->name);
+	Py_XINCREF(self->index);
 
 	return 0;
 }
@@ -187,12 +160,18 @@ static PyMethodDef BUFRFileEntry_Methods[] = {
 	{NULL, NULL, 0, NULL },
 };
 
+static PyObject * BUFRFileEntry_str(_BUFRFile_BUFRFileEntryObject *self){
 
-static PyTypeObject BUFRFile_BUFRFileEntryType = {
+    return PyString_FromFormat("%d: %s" , PyInt_AsLong(self->index), 
+            PyString_AsString(self->name));
+}
+
+
+static PyTypeObject _BUFRFile_BUFRFileEntryType = {
 		PyObject_HEAD_INIT(NULL)
 			0,
-		"BUFRFile.BUFRFileEntry",                /* char *tp_name; */
-		sizeof(BUFRFile_BUFRFileEntryObject),          /* int tp_basicsize; */
+		"_BUFRFile.BUFRFileEntry",                /* char *tp_name; */
+		sizeof(_BUFRFile_BUFRFileEntryObject),          /* int tp_basicsize; */
 		0,                        /* int tp_itemsize;*/
 		(destructor) BUFRFileEntry_dealloc,         /* destructor tp_dealloc; */
 		0,                        /* printfunc  tp_print;   */
@@ -205,7 +184,7 @@ static PyTypeObject BUFRFile_BUFRFileEntryType = {
 		0,                        /* PyMappingMethods *tp_as_mapping; */
 		0,                        /* hashfunc tp_hash;    */
 		0,                        /* ternaryfunc tp_call;  */
-		0,                        /* reprfunc tp_str;     */
+		BUFRFileEntry_str,       /* reprfunc tp_st;     */
 		0,                        /* tp_getattro  */
 		0,                        /* tp_setattro  */
 		0,                        /* tp_as_buffer */
@@ -250,12 +229,12 @@ typedef struct {
 	int Nbpw;
 	int kelem, kvals, icode; /*number of elements, values, */
 
-} BUFRFile_BUFRFileObject;
+} _BUFRFile_BUFRFileObject;
 
 
 static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) {
 	/* Creates a new instance for a BUFRFile.BUFRFile object */
-	BUFRFile_BUFRFileObject *self = (BUFRFile_BUFRFileObject *) type->tp_alloc(type, 0);
+	_BUFRFile_BUFRFileObject *self = (_BUFRFile_BUFRFileObject *) type->tp_alloc(type, 0);
 	self->inpfp = NULL;
 
 	self->bufr_message0 = PyMem_New(char,15000);
@@ -280,7 +259,7 @@ static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) 
 	return (PyObject *) self;
 }
 
-static void BUFRFile_dealloc(BUFRFile_BUFRFileObject *self) {
+static void BUFRFile_dealloc(_BUFRFile_BUFRFileObject *self) {
 
 
     if(self->inpfp) {
@@ -307,20 +286,20 @@ static void BUFRFile_dealloc(BUFRFile_BUFRFileObject *self) {
     self->ob_type->tp_free(self);
 }
 
-static int BUFRFile_init(BUFRFile_BUFRFileObject *self, PyObject *args, PyObject *kw) {
+static int BUFRFile_init(_BUFRFile_BUFRFileObject *self, PyObject *args, PyObject *kw) {
 	PyObject * inp_filename;
 	if (!PyArg_ParseTuple(args, "O", &inp_filename)) {
 		return -1;
 	}
 
     if (self->inpfp) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "__init__ already called");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "__init__ already called");
 		return -1;
 	}
 	if(sizeof(long) == 4) self->Nbpw=32;
 	else if(sizeof(long) == 8) self->Nbpw=64;
 	else{
-		PyErr_SetString(BUFRFile_BUFRFileError, "Wrong architecture");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "Wrong architecture");
 		return -1;
 	}
 	self->kelem = KELEM;
@@ -332,17 +311,17 @@ static int BUFRFile_init(BUFRFile_BUFRFileObject *self, PyObject *args, PyObject
 
 	self->inpfp = fopen(PyString_AsString(self->filename), "rb");
 	if (self->inpfp == NULL) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "unable to open file ");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "unable to open file ");
 		return -1;
 	}
 	return 0;
 
 }
 
-static PyObject * BUFRFile_read(BUFRFile_BUFRFileObject *self) {
+static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 
     if(!self->inpfp) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "File not open");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "File not open");
 		return NULL;
     }
 
@@ -364,19 +343,19 @@ static PyObject * BUFRFile_read(BUFRFile_BUFRFileObject *self) {
 	if( status == -1 ) 
 		return NULL;
 	else if( status == -2 ) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "Error in file handling");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "Error in file handling");
 		return NULL;
 	}   
 	else if( status == -3 ) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "Too small input array");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "Too small input array");
 		return NULL;
 	}
 	else if( status == -4 ) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "Too small input array");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "Too small input array");
 		return NULL;
 	}
 	else if( status < 0 ) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "Error reading BUFR");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR");
 		return NULL;
 	}
 	/*    Expand bufr message calling fortran program */
@@ -429,7 +408,7 @@ static PyObject * BUFRFile_read(BUFRFile_BUFRFileObject *self) {
 
 	if ( kerr )
 	{
-		PyErr_SetString(BUFRFile_BUFRFileError, "Error reading BUFR entry");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR entry");
 		return NULL;
 	}
 
@@ -450,37 +429,34 @@ static PyObject * BUFRFile_read(BUFRFile_BUFRFileObject *self) {
 	char ch;
 
 	for(s=0; s < self->kelem; s++ ){
-		/* get name of this entry and trim whitespace*/
+		/* get name of this entry*/
 		for(r=0; r< 64; r++){
-			ch = tolower(*(self->cnames + s*64 + r));
+			ch = *(self->cnames + s*64 + r);
 			mycname[r] = ch;
 		}
 
 		mycname[64] = '\0';
-		trim(mycname);
 
 		/* Don't accept empty names*/
 		if(mycname[0] == '\0')
 			continue;
 
-		/* get name of unit of this entry and trim whitespace*/
+		/* get name of unit of this entry*/
 		for(r=0; r<24; r++) {
-			ch = tolower(*(self->cunits + s*24 + r));
+			ch = *(self->cunits + s*24 + r);
 			myunits[r] = ch;
 		}
 		myunits[24] = '\0'; /*insert eol missing from fortran
 				      string */
-		trim(myunits); /* trims white space from end of string */
-
-		subst_space(mycname); /*make a valid name*/
 
 		/* Create a New BUFRFileEntry object to hold the data */
-		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata;
+		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata, *index;
 
 		/* unit string*/
-		unit = PyString_FromFormat("%s ", myunits);
+		unit = PyString_FromFormat("%s", myunits);
 		/* name string */
-		name = PyString_FromFormat("%s_%d", mycname, s);
+		name = PyString_FromFormat("%s", mycname);
+        index = PyInt_FromLong(s);
 
 		/* subsets differ by kelem = number of elements. Notice
 		 * that the fill values are from the
@@ -501,30 +477,32 @@ static PyObject * BUFRFile_read(BUFRFile_BUFRFileObject *self) {
             PyObject * tmp_bdata = PyArray_SimpleNewFromData(1, dimensions,PyArray_DOUBLE, (void*) (self->values + s*nsup));
             PyArray_CopyInto((PyArrayObject *) bdata, (PyArrayObject *) tmp_bdata);
             Py_XDECREF(tmp_bdata);
-            /*bdata = (PyArrayObject *) PyArray_SimpleNewFromData(1, dimensions,PyArray_DOUBLE, (void*) (self->values + s*nsup));*/
         }
 
         if (bdata == NULL) {
-            PyErr_SetString(BUFRFile_BUFRFileError, "Unable to retrieve BUFR data");
+            PyErr_SetString(_BUFRFile_BUFRFileError, "Unable to retrieve BUFR data");
             return NULL;
         }
 
 		/* Create bufr enty object and insert object into list */
-		bufr_entry_args = PyTuple_New(3);
-		PyTuple_SetItem(bufr_entry_args,0,name);
+		bufr_entry_args = PyTuple_New(4);
+        
+		PyTuple_SetItem(bufr_entry_args,0,index);
+		PyTuple_SetItem(bufr_entry_args,1,name);
         if(unit) {
-		    PyTuple_SetItem(bufr_entry_args,1, unit);
+		    PyTuple_SetItem(bufr_entry_args,2, unit);
         }
         else {
-            PyTuple_SetItem(bufr_entry_args,1, Py_BuildValue("s", ""));
+            PyTuple_SetItem(bufr_entry_args,2, Py_BuildValue("s", ""));
         }
-		PyTuple_SetItem(bufr_entry_args,2,bdata);
+		PyTuple_SetItem(bufr_entry_args,3,bdata);
 
-		bufr_entry =  PyObject_CallObject((PyObject *) &BUFRFile_BUFRFileEntryType, bufr_entry_args);
+        /* Pass arguments to constructor and deference copy of input arguments */
+		bufr_entry =  PyObject_CallObject((PyObject *) &_BUFRFile_BUFRFileEntryType, bufr_entry_args);
         Py_XDECREF( bufr_entry_args );
 
 		if (PyList_Append(bufr_entries,bufr_entry)) {
-			PyErr_SetString(BUFRFile_BUFRFileError, "Error reading BUFR entry");
+			PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR entry");
 			return NULL;
 		}
         Py_XDECREF(bufr_entry);
@@ -538,22 +516,22 @@ static PyObject * BUFRFile_read(BUFRFile_BUFRFileObject *self) {
 
 } 
 
-static PyObject * BUFRFile_close(BUFRFile_BUFRFileObject *self) {
+static PyObject * BUFRFile_close(_BUFRFile_BUFRFileObject *self) {
 	if (! self->inpfp ) {
-		PyErr_SetString(BUFRFile_BUFRFileError, "BUFRFile not open");
+		PyErr_SetString(_BUFRFile_BUFRFileError, "BUFRFile not open");
 		return NULL;
 	}
     fclose(self->inpfp);
     Py_RETURN_NONE;
 }
 
-static PyObject * BUFRFile_iter(BUFRFile_BUFRFileObject *self) {
+static PyObject * BUFRFile_iter(_BUFRFile_BUFRFileObject *self) {
     Py_XINCREF(self);
 	return (PyObject *) self;
 }
-static PyObject * BUFRFile_next(BUFRFile_BUFRFileObject *self) {
+static PyObject * BUFRFile_next(_BUFRFile_BUFRFileObject *self) {
     if(!self->inpfp) {
-        PyErr_SetString(BUFRFile_BUFRFileError,"BUFRFile not open");
+        PyErr_SetString(_BUFRFile_BUFRFileError,"BUFRFile not open");
         return NULL;
     }
 	PyObject * res; 
@@ -571,18 +549,18 @@ static PyObject * BUFRFile_next(BUFRFile_BUFRFileObject *self) {
     return NULL;
 }
 
-static PyObject * BUFRFile_reset(BUFRFile_BUFRFileObject *self) {
+static PyObject * BUFRFile_reset(_BUFRFile_BUFRFileObject *self) {
     BUFRFile_close(self);
 	self->inpfp = fopen(PyString_AsString(self->filename), "rb");
     if (!self->inpfp) {
-        PyErr_SetString(BUFRFile_BUFRFileError, "Unable to reset file");
+        PyErr_SetString(_BUFRFile_BUFRFileError, "Unable to reset file");
         return NULL;
     }
     Py_RETURN_NONE;
 }
 
 
-static PyObject * BUFRFile_keys(BUFRFile_BUFRFileObject *self) {
+static PyObject * BUFRFile_keys(_BUFRFile_BUFRFileObject *self) {
     if(!BUFRFile_reset(self))
         return NULL;
     PyObject * bufr_entries = BUFRFile_next(self);
@@ -593,16 +571,16 @@ static PyObject * BUFRFile_keys(BUFRFile_BUFRFileObject *self) {
     
 	PyObject * bufr_keys = PyList_New(0);
     if(!bufr_keys ) {
-        PyErr_SetString(BUFRFile_BUFRFileError, "Error creating keys list");
+        PyErr_SetString(_BUFRFile_BUFRFileError, "Error creating keys list");
         BUFRFile_reset(self);
         return NULL;
     }
     int i;
     for(i=0; i<PyList_Size(bufr_entries); i++) {
-        BUFRFile_BUFRFileEntryObject * entry;
-        entry = (BUFRFile_BUFRFileEntryObject *) PyList_GetItem(bufr_entries, i);
+        _BUFRFile_BUFRFileEntryObject * entry;
+        entry = (_BUFRFile_BUFRFileEntryObject *) PyList_GetItem(bufr_entries, i);
         if (PyList_Append(bufr_keys,entry->name)) {
-            PyErr_SetString(BUFRFile_BUFRFileError, "Error getting keys");
+            PyErr_SetString(_BUFRFile_BUFRFileError, "Error getting keys");
             BUFRFile_reset(self);
             return NULL;
         }
@@ -612,12 +590,12 @@ static PyObject * BUFRFile_keys(BUFRFile_BUFRFileObject *self) {
     return bufr_keys;
 }
 
-static PyMemberDef BUFRFile_Members[] = {
-    {"filename", T_OBJECT_EX, offsetof(BUFRFile_BUFRFileObject, filename), 0, "filename"},
+static PyMemberDef _BUFRFile_Members[] = {
+    {"filename", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileObject, filename), 0, "filename"},
     {NULL}  /* Sentinel */
 };
 
-static PyMethodDef BUFRFile_Methods[] = {
+static PyMethodDef _BUFRFile_Methods[] = {
 	{ "read", (void*) BUFRFile_read, METH_NOARGS, "Reads a subset of the BUFR file" }, 
 	{ "close", (void*) BUFRFile_close, METH_NOARGS, "Closes input BUFR file"},
 	{ "next",  (void*) BUFRFile_next, METH_NOARGS, "Reads next subset, for python iterator."},
@@ -627,11 +605,11 @@ static PyMethodDef BUFRFile_Methods[] = {
 };
 
 
-static PyTypeObject BUFRFile_BUFRFileType = {
+static PyTypeObject _BUFRFile_BUFRFileType = {
 	PyObject_HEAD_INIT(NULL)
 	0,
-	"BUFRFile.BUFRFile",                /* char *tp_name; */
-	sizeof(BUFRFile_BUFRFileObject),          /* int tp_basicsize; */
+	"_BUFRFile.BUFRFile",                /* char *tp_name; */
+	sizeof(_BUFRFile_BUFRFileObject),          /* int tp_basicsize; */
     0,                        /* int tp_itemsize;*/
     (destructor) BUFRFile_dealloc,         /* destructor tp_dealloc; */
     0,                        /* printfunc  tp_print;   */
@@ -656,8 +634,8 @@ static PyTypeObject BUFRFile_BUFRFileType = {
     0,                        /* tp_weaklistoffset*/
     (void*) BUFRFile_iter,            /* tp_iter*/
     (void*) BUFRFile_next,            /* tp_iternext */
-    BUFRFile_Methods,         /* tp_methods */
-    BUFRFile_Members,         /* tp_members */
+    _BUFRFile_Methods,         /* tp_methods */
+    _BUFRFile_Members,         /* tp_members */
     0,                        /* tp_getset*/
     0,                        /* tp_base */
     0,                        /* tp_dict */
@@ -671,26 +649,26 @@ static PyTypeObject BUFRFile_BUFRFileType = {
 };
 
 
-PyMODINIT_FUNC initBUFRFile() {
+PyMODINIT_FUNC init_BUFRFile() {
     import_array();
     PyObject *m;
-    if (PyType_Ready(&BUFRFile_BUFRFileType) < 0 ) {
+    if (PyType_Ready(&_BUFRFile_BUFRFileType) < 0 ) {
         return;
     }
-    if (PyType_Ready(&BUFRFile_BUFRFileEntryType) < 0 ) {
+    if (PyType_Ready(&_BUFRFile_BUFRFileEntryType) < 0 ) {
         return;
     }
     
-    m = Py_InitModule3("BUFRFile", BUFRFile_Methods, "Python BUFR file module.");
+    m = Py_InitModule3("_BUFRFile", _BUFRFile_Methods, "Python BUFR file module.");
     if (m == NULL)
         return;
 
-    BUFRFile_BUFRFileError = PyErr_NewException("BUFRFile.BUFRFileError", NULL, NULL);
-    Py_INCREF(BUFRFile_BUFRFileError);
-    Py_INCREF(&BUFRFile_BUFRFileType);
-    Py_INCREF(&BUFRFile_BUFRFileEntryType);
-    PyModule_AddObject(m, "BUFRFile", (PyObject *) &BUFRFile_BUFRFileType);
-    PyModule_AddObject(m, "BUFRFileEntry", (PyObject *) &BUFRFile_BUFRFileEntryType);
-    PyModule_AddObject(m, "BUFRFileError", BUFRFile_BUFRFileError);
+    _BUFRFile_BUFRFileError = PyErr_NewException("_BUFRFile.BUFRFileError", NULL, NULL);
+    Py_INCREF(_BUFRFile_BUFRFileError);
+    Py_INCREF(&_BUFRFile_BUFRFileType);
+    Py_INCREF(&_BUFRFile_BUFRFileEntryType);
+    PyModule_AddObject(m, "BUFRFile", (PyObject *) &_BUFRFile_BUFRFileType);
+    PyModule_AddObject(m, "BUFRFileEntry", (PyObject *) &_BUFRFile_BUFRFileEntryType);
+    PyModule_AddObject(m, "BUFRFileError", _BUFRFile_BUFRFileError);
 }
 

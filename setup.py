@@ -20,12 +20,12 @@ except KeyError, e:
             """)
     sys.exit(1)
 
-BUFRFile = Extension('pybufr/BUFRFile',
+BUFRFile = Extension('pybufr/_BUFRFile',
                      define_macros = [('DTABLE_PATH', BUFR_TABLES),],
-                     sources = ['pybufr/BUFRFile.c',], 
+                     sources = ['pybufr/_BUFRFile.c',], 
                      extra_compile_args = ['-O3', ], 
                      extra_link_args = [], 
-                     libraries = ['bufr','gfortran',],
+                     libraries = ['emos','gfortran',],
                      library_dirs = ['/usr/lib','/usr/local/lib',
                                      '/usr/lib64','/usr/local/lib64',
                                      BUFR_LIBRARY_PATH, ],
