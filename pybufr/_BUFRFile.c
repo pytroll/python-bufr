@@ -1,18 +1,26 @@
 /*
- * Python wrapper for reading BUFR files incrementally 
- *
- * Author Kristian Rune Larsen <krl@dmi.dk>
- *
- *
- *
- */
-
+* python-bufr , wrapper for ECMWF BUFR library
+* 
+* Copyright (C) 2010  Kristian Rune Larsen
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <stdio.h> 
 #include <stdlib.h>
 #include "Python.h"
 #include "numpy/arrayobject.h"
-/*#include "numarray/arrayobject.h"*/
 #include "structmember.h"
 
 
@@ -247,6 +255,7 @@ static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) 
 	self->key = PyMem_New(int, 46);
 	self->ktdlst = PyMem_New(int,KELEM);
 	self->ktdexp = PyMem_New(int, KELEM);
+
 	/* variable values */
 	self->values = PyMem_New(double,KVALS);
 	/*cnames , variable names */
@@ -287,8 +296,9 @@ static void BUFRFile_dealloc(_BUFRFile_BUFRFileObject *self) {
 }
 
 static int BUFRFile_init(_BUFRFile_BUFRFileObject *self, PyObject *args, PyObject *kw) {
+
 	PyObject * inp_filename;
-	if (!PyArg_ParseTuple(args, "O", &inp_filename)) {
+	if (!PyArg_ParseTuple(args, "O", &inp_filename )) {
 		return -1;
 	}
 
@@ -308,6 +318,7 @@ static int BUFRFile_init(_BUFRFile_BUFRFileObject *self, PyObject *args, PyObjec
 
     self->filename = inp_filename;
     Py_XINCREF(self->filename);
+
 
 	self->inpfp = fopen(PyString_AsString(self->filename), "rb");
 	if (self->inpfp == NULL) {
@@ -470,14 +481,10 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 		/* Create data array */
 		int dimensions[1];
 		dimensions[0]=nsup;
-        if( collapse(self->values + s*nsup, nsup) )
-            bdata = PyFloat_FromDouble( *(self->values+s*nsup) );
-        else {
-            bdata = PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
-            PyObject * tmp_bdata = PyArray_SimpleNewFromData(1, dimensions,PyArray_DOUBLE, (void*) (self->values + s*nsup));
-            PyArray_CopyInto((PyArrayObject *) bdata, (PyArrayObject *) tmp_bdata);
-            Py_XDECREF(tmp_bdata);
-        }
+        bdata = PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
+        PyObject * tmp_bdata = PyArray_SimpleNewFromData(1, dimensions,PyArray_DOUBLE, (void*) (self->values + s*nsup));
+        PyArray_CopyInto((PyArrayObject *) bdata, (PyArrayObject *) tmp_bdata);
+        Py_XDECREF(tmp_bdata);
 
         if (bdata == NULL) {
             PyErr_SetString(_BUFRFile_BUFRFileError, "Unable to retrieve BUFR data");
