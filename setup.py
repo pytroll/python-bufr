@@ -20,7 +20,7 @@ except KeyError, e:
             """)
     sys.exit(1)
 
-BUFRFile = Extension('pybufr/_BUFRFile',
+BUFRFile = Extension('bufr/_BUFRFile',
                      define_macros = [('DTABLE_PATH', BUFR_TABLES),],
                      sources = ['pybufr/_BUFRFile.c',], 
                      extra_compile_args = ['-O3', ], 
@@ -33,11 +33,11 @@ BUFRFile = Extension('pybufr/_BUFRFile',
                                      '/usr/local/include',
                                      NUMPY_INCLUDE_PATH])
 
-setup(name='pybufr',
+setup(name='python-bufr',
       version='0.3',
       description='Generic Python BUFR file reader based on the ECMWF BUFR library',
       author='Kristian Rune Larsen',
       author_email='krl@dmi.dk',
-      packages = ['pybufr'],
+      packages = ['bufr'],
       ext_modules = [ BUFRFile, ]
      )

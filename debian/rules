@@ -47,8 +47,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# Add here commands to install the package into debian/pybufr.
-	python setup.py install --root=$(CURDIR)/debian/pybufr
+	# Add here commands to install the package into debian/bufr.
+	python setup.py install --root=$(CURDIR)/debian/pybufr --prefix=/opt
 
 
 # Build architecture-independent files here.
