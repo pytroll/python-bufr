@@ -1,0 +1,12 @@
+Source: sqlalchemy-marshall
+Section: misc
+Priority: extra
+Maintainer: Kristian Rune Larsen <krl@dmi.dk>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: sqlalchemy-marshall
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, xml-marshall, python-sqlalchemy
+Description: DMI/TI Generic XML serialization for SQL Alchemy
+ Provides functionality to make XML dumps of a SQL Alchemy database

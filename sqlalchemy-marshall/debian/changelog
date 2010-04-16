@@ -1,0 +1,6 @@
+sqlalchemy-marshall (0.1-1) unstable; urgency=low
+
+  * initial release
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 12 Oct 2009 13:52:47 +0200
+

@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+#
+#
+#
+# Author Kristian Rune Larsen <krl@dmi.dk>
+
+
+""" import XML or bufr file into database """
+
+__revision__ = 0.1
+
+import bufr
+from bufr.metadb as bufrmetadb
+import sys
+import os
+import getopt
+
+
+def usage():
+    """Prints basic usage and exits"""
+    print """USAGE:
+    import_bfr [-c connection url] [-s start index] <-i instrument> <-g glob> filename 
+    
+    filename    :   Can either be an xml file or a BUFR file. File type is determined using
+                    filename extension. 
+
+    -i          :   instrument, only needed when importing BUFR files, otherwise ignored
+    -g          :   glob, only needed when importing BUFR files, otherwise ignored
+    -s          :   start index , used when imporing BUFR files
+    
+    """
+    sys.exit(2)
+
+# main
+optlist, args = getopt.getopt(sys.argv[1:], 'c:i:g:s:')
+
+try: 
+    ifn = args[0]
+except Exception, e:
+    print " Not enough arguments "
+    usage()
+
+connection_url = None
+instr = None
+fglob = None
+index = 1
+
+for opts in optlist:
+    if opts[0] == '-i':
+        instr = opts[1]
+        continue
+    if opts[0] == '-g':
+        fglob = opts[1]
+        continue
+    if opts[0] == '-c':
+        connection_url = opts[1]
+        continue
+    if opts[0] == '-s':
+        index = int(opts[1])
+        continue
+
+#
+# Test if we have enough arguments for BUFR import
+#
+
+if '.xml' not in ifn:
+    if instr is None or fglob is None:
+        print "Instrument and glob needs to be set when importing BUFR files"
+        usage()
+# 
+# Start connection to database
+#
+
+conn = None
+if connection_url is None:
+    conn = bufrmetadb.BUFRDescDBConn()
+else:
+    conn = bufrmetadb.BUFRDescDBConn( connection_url ) 
+
+#
+# import into database
+#
+
+# insert XML and exit, guard statement
+if '.xml' in ifn:
+    conn.import_xml(ifn)
+    sys.exit(0)
+
+#
+# Handle BUFR input
+#
+
+bfr = pybufr.BUFRFile(ifn)
+
+# insert BUFR file
+for i in range(index):
+    section = bfr.next()
+
+# get info from file
+bufr_info = pybufr.get_bfr_info(bfr)
+conn.insert_bufr_keys(instr,fglob,bufr_info, index)
+
+sys.exit(0)
+
+
+

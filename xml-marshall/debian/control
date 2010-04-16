@@ -1,0 +1,13 @@
+Source: xml-marshall
+Section: misc
+Priority: extra
+Maintainer: Kristian Rune Larsen <krl@dmi.dk>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: xml-marshall
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: DMI/TI python generic XML serialization
+ Provides serialization handles for complex python objects.
+ Primitive objects work out of the box. 
