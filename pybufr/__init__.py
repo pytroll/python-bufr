@@ -46,15 +46,20 @@ class BUFRRecordInfo:
     
     """
     max_length = 1
-    packable = True
+
+    packable_2d = True  # scans can be packed into one scalar across scanline,
+                        # 2. dimension
+
+    packable_1d = True  # scanlines can be packed into one scanline across all
+                        # scanlines, 1 dimension
     name = None
     index = None
     unit = None
     dimension_name = None
-    dimension_lenght = None
+    dimension_length = None
     fillvalue_double = 1.7e38 # standard BUFR fill value
     fillvalue_int = 2147483647 # standard BUFR fill value
-    type = np.int
+    type = 'int'
 
     def __str__(self):
         """ Print string representation """
@@ -62,7 +67,18 @@ class BUFRRecordInfo:
         for k,v in self.__dict__.iteritems():
             ostr = ostr + "%s : %s " % (k,v)
         return ostr
- 
+
+def netcdf_compliant_name( name, sequence ):
+    """ return variable as a netcdf compliant name 
+        
+        input: BUFR Name and sequence number
+        output: List of unique names 
+    
+    """
+    name = name.strip().lower()
+    for i in ( '(', ')', ' ', '-',',','/','\\','%'):
+        name = name.replace(i, '_')
+    return "%s_%d" % (name, sequence )
 
 def netcdf_compliant_names( section ):
     """ return variables as netcdf compliant names 
@@ -73,10 +89,7 @@ def netcdf_compliant_names( section ):
     """
     names = {} 
     for record in section:
-        name = record.name.strip().lower()
-        for i in ('(', ')', ' ', '-'):
-            name = name.replace(i, '_')
-        names[record.index] = "%s_%d" % (name, record.index)
+        names[record.index] =  netcdf_compliant_name(name, record.index)
     return names
 
 
@@ -91,8 +104,8 @@ def get_type( record ):
     eps = np.finfo(np.float).eps
     try:
         if True in (np.floor(record.data) - record.data > 10*eps):
-            return np.float
-        return np.int
+            return 'float'
+        return 'int'
     except TypeError:
         return record.data.__class__.__name__
 
@@ -181,9 +194,9 @@ def get_bfr_info(bfr):
         try:
             pdata = pack_record(record) 
             info_obj.type = pdata.__class__.__name__
-            info_obj.packable = True
+            info_obj.packable_2d = True
         except RecordPackError, e:
-            info_obj.packable = False
+            info_obj.packable_2d = False
             info_obj.type = get_type(record)
         try:
             info_obj.max_length = len(record.data)
@@ -192,28 +205,42 @@ def get_bfr_info(bfr):
         info_list.append(info_obj)
     
     # Search through the rest of the file
-
+    last_section = section
     for section in bfr:
         for record in section:
             info_obj = info_list[record.index]
+
+            # compare all values in this record with the previous record to
+            # figure out if all data are alike across all records 
+            if info_obj.packable_1d:
+                try:
+                    if True in (record.data != last_section[record.index].data):
+                        info_obj.packable_1d = False
+                except TypeError:
+                    # handle cases where numpy returns only True
+                    if record.data != last_section[record.index].data:
+                        info_obj.packable_1d = False
+
+
             try:
                 N = len(record.data) # throws TypeError if not defined for record.data
                 if N > info_obj.max_length: 
                     info_obj.max_length = N
 
-                if info_obj.packable:
+                if info_obj.packable_2d:
                     pdata = pack_record(record)
                     if info_obj.type is 'int':
                         info_obj.type = pdata.__class__.__name__
 
             except TypeError, e:
-                info_obj.packable = False
+                info_obj.packable_2d = False
                 if info_obj.type is 'int':
                     info_obj.type = record.data.__class__.__name__
             except RecordPackError, e:
-                info_obj.packable = False
+                info_obj.packable_2d = False
                 if info_obj.type is 'int':
                     info_obj.type = get_type(record)
+        last_section = section
 
     # Resets the file handle
     bfr.reset()
@@ -221,6 +248,7 @@ def get_bfr_info(bfr):
     # Initialise the dimension lenghts
     for info_obj in info_list:
         info_obj.dimension_length = info_obj.max_length
+        info_obj.dimension_name = "dim_%d" % info_obj.max_length 
 
     return info_list
 
