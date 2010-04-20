@@ -12,22 +12,22 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/xml-marshall
-NAME=xml-marshall
-DESC=xml-marshall
+DAEMON=/usr/sbin/python-xml-marshall
+NAME=python-xml-marshall
+DESC=python-xml-marshall
 
 test -x $DAEMON || exit 0
 
-LOGDIR=/var/log/xml-marshall
+LOGDIR=/var/log/python-xml-marshall
 PIDFILE=/var/run/$NAME.pid
 DODTIME=1                   # Time to wait for the server to die, in seconds
                             # If this value is set too low you might not
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
-# Include xml-marshall defaults if available
-if [ -f /etc/default/xml-marshall ] ; then
-	. /etc/default/xml-marshall
+# Include python-xml-marshall defaults if available
+if [ -f /etc/default/python-xml-marshall ] ; then
+	. /etc/default/python-xml-marshall
 fi
 
 set -e

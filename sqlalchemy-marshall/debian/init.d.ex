@@ -12,22 +12,22 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/sqlalchemy-marshall
-NAME=sqlalchemy-marshall
-DESC=sqlalchemy-marshall
+DAEMON=/usr/sbin/python-sqlalchemy-marshall
+NAME=python-sqlalchemy-marshall
+DESC=python-sqlalchemy-marshall
 
 test -x $DAEMON || exit 0
 
-LOGDIR=/var/log/sqlalchemy-marshall
+LOGDIR=/var/log/python-sqlalchemy-marshall
 PIDFILE=/var/run/$NAME.pid
 DODTIME=1                   # Time to wait for the server to die, in seconds
                             # If this value is set too low you might not
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
-# Include sqlalchemy-marshall defaults if available
-if [ -f /etc/default/sqlalchemy-marshall ] ; then
-	. /etc/default/sqlalchemy-marshall
+# Include python-sqlalchemy-marshall defaults if available
+if [ -f /etc/default/python-sqlalchemy-marshall ] ; then
+	. /etc/default/python-sqlalchemy-marshall
 fi
 
 set -e

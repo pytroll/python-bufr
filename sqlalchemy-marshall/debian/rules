@@ -27,7 +27,7 @@ build-stamp: configure-stamp
 
 	# Add here commands to compile the package.
 	python setup.py build
-	#docbook-to-man debian/sqlalchemy-marshall.sgml > sqlalchemy-marshall.1
+	#docbook-to-man debian/python-sqlalchemy-marshall.sgml > python-sqlalchemy-marshall.1
 
 	touch $@
 
@@ -37,7 +37,7 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	rm -rf $(CURDIR)/build $(CURDIR)/debian/sqlalchemy-marshall
+	rm -rf $(CURDIR)/build $(CURDIR)/debian/python-sqlalchemy-marshall
 
 	dh_clean 
 
@@ -47,8 +47,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# Add here commands to install the package into debian/sqlalchemy-marshall.
-	python setup.py install --root=$(CURDIR)/debian/sqlalchemy-marshall --prefix=/opt
+	# Add here commands to install the package into debian/python-sqlalchemy-marshall.
+	python setup.py install --root=$(CURDIR)/debian/python-sqlalchemy-marshall --prefix=/opt
 
 
 # Build architecture-independent files here.

@@ -1,11 +1,11 @@
-Source: xml-marshall
+Source: python-xml-marshall
 Section: misc
 Priority: extra
 Maintainer: Kristian Rune Larsen <krl@dmi.dk>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.2
 
-Package: xml-marshall
+Package: python-xml-marshall
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: DMI/TI python generic XML serialization

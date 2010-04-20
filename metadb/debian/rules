@@ -27,7 +27,7 @@ build-stamp: configure-stamp
 
 	# Add here commands to compile the package.
 	python setup.py build
-	#docbook-to-man debian/pybufr-metadb.sgml > pybufr-metadb.1
+	#docbook-to-man debian/python-bufr-metadb.sgml > python-bufr-metadb.1
 
 	touch $@
 
@@ -37,7 +37,7 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	rm -rf $(CURDIR)/build $(CURDIR)/debian/pybufr-metadb
+	rm -rf $(CURDIR)/build $(CURDIR)/debian/python-bufr-metadb
 
 	dh_clean 
 
@@ -47,8 +47,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# Add here commands to install the package into debian/pybufr-metadb.
-	python setup.py install --root=$(CURDIR)/debian/pybufr-metadbi --prefix=/opt
+	# Add here commands to install the package into debian/python-bufr-metadb.
+	python setup.py install --root=$(CURDIR)/debian/python-bufr-metadbi --prefix=/opt
 
 
 # Build architecture-independent files here.

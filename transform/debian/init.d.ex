@@ -12,22 +12,22 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/pybufr-transform
-NAME=pybufr-transform
-DESC=pybufr-transform
+DAEMON=/usr/sbin/python-bufr-transform
+NAME=python-bufr-transform
+DESC=python-bufr-transform
 
 test -x $DAEMON || exit 0
 
-LOGDIR=/var/log/pybufr-transform
+LOGDIR=/var/log/python-bufr-transform
 PIDFILE=/var/run/$NAME.pid
 DODTIME=1                   # Time to wait for the server to die, in seconds
                             # If this value is set too low you might not
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
-# Include pybufr-transform defaults if available
-if [ -f /etc/default/pybufr-transform ] ; then
-	. /etc/default/pybufr-transform
+# Include python-bufr-transform defaults if available
+if [ -f /etc/default/python-bufr-transform ] ; then
+	. /etc/default/python-bufr-transform
 fi
 
 set -e

@@ -1,5 +1,5 @@
 #!/bin/sh
-# preinst script for xml-marshall
+# preinst script for python-xml-marshall
 #
 # see: dh_installdeb(1)
 

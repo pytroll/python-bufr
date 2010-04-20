@@ -12,22 +12,22 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/pybufr-metadb
-NAME=pybufr-metadb
-DESC=pybufr-metadb
+DAEMON=/usr/sbin/python-bufr-metadb
+NAME=python-bufr-metadb
+DESC=python-bufr-metadb
 
 test -x $DAEMON || exit 0
 
-LOGDIR=/var/log/pybufr-metadb
+LOGDIR=/var/log/python-bufr-metadb
 PIDFILE=/var/run/$NAME.pid
 DODTIME=1                   # Time to wait for the server to die, in seconds
                             # If this value is set too low you might not
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
-# Include pybufr-metadb defaults if available
-if [ -f /etc/default/pybufr-metadb ] ; then
-	. /etc/default/pybufr-metadb
+# Include python-bufr-metadb defaults if available
+if [ -f /etc/default/python-bufr-metadb ] ; then
+	. /etc/default/python-bufr-metadb
 fi
 
 set -e

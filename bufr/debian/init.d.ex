@@ -12,22 +12,22 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/pybufr
-NAME=pybufr
-DESC=pybufr
+DAEMON=/usr/sbin/python-bufr
+NAME=python-bufr
+DESC=python-bufr
 
 test -x $DAEMON || exit 0
 
-LOGDIR=/var/log/pybufr
+LOGDIR=/var/log/python-bufr
 PIDFILE=/var/run/$NAME.pid
 DODTIME=1                   # Time to wait for the server to die, in seconds
                             # If this value is set too low you might not
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
-# Include pybufr defaults if available
-if [ -f /etc/default/pybufr ] ; then
-	. /etc/default/pybufr
+# Include python-bufr defaults if available
+if [ -f /etc/default/python-bufr ] ; then
+	. /etc/default/python-bufr
 fi
 
 set -e

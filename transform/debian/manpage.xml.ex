@@ -37,7 +37,7 @@ and docbook-xsl in your Build-Depends control field.
   <!ENTITY dhemail     "<email>krl@dmi.dk</email>">
   <!ENTITY dhusername  "Kristian Rune Larsen">
   <!ENTITY dhucpackage "<refentrytitle>PYBUFR-TRANSFORM</refentrytitle>">
-  <!ENTITY dhpackage   "pybufr-transform">
+  <!ENTITY dhpackage   "python-bufr-transform">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">

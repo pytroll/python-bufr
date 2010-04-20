@@ -1,6 +1,6 @@
-# Defaults for xml-marshall initscript
-# sourced by /etc/init.d/xml-marshall
-# installed at /etc/default/xml-marshall by the maintainer scripts
+# Defaults for python-xml-marshall initscript
+# sourced by /etc/init.d/python-xml-marshall
+# installed at /etc/default/python-xml-marshall by the maintainer scripts
 
 #
 # This is a POSIX shell fragment

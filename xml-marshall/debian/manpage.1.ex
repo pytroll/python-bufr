@@ -16,16 +16,16 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-xml-marshall \- program to do something
+python-xml-marshall \- program to do something
 .SH SYNOPSIS
-.B xml-marshall
+.B python-xml-marshall
 .RI [ options ] " files" ...
 .br
 .B bar
 .RI [ options ] " files" ...
 .SH DESCRIPTION
 This manual page documents briefly the
-.B xml-marshall
+.B python-xml-marshall
 and
 .B bar
 commands.
@@ -33,7 +33,7 @@ commands.
 .\" TeX users may be more comfortable with the \fB<whatever>\fP and
 .\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
 .\" respectively.
-\fBxml-marshall\fP is a program that...
+\fBpython-xml-marshall\fP is a program that...
 .SH OPTIONS
 These programs follow the usual GNU command line syntax, with long
 options starting with two dashes (`-').
@@ -53,7 +53,7 @@ The programs are documented fully by
 .IR "The Rise and Fall of a Fooish Bar" ,
 available via the Info system.
 .SH AUTHOR
-xml-marshall was written by <upstream author>.
+python-xml-marshall was written by <upstream author>.
 .PP
 This manual page was written by Kristian Rune Larsen <krl@dmi.dk>,
 for the Debian project (but may be used by others).

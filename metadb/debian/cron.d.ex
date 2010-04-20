@@ -1,4 +1,4 @@
 #
-# Regular cron jobs for the pybufr-metadb package
+# Regular cron jobs for the python-bufr-metadb package
 #
-0 4	* * *	root	pybufr-metadb_maintenance
+0 4	* * *	root	python-bufr-metadb_maintenance

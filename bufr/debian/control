@@ -1,11 +1,11 @@
-Source: pybufr
+Source: python-bufr
 Section: misc
 Priority: extra
 Maintainer: Kristian Rune Larsen <krl@dmi.dk>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.2
 
-Package: pybufr
+Package: python-bufr
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, emos, python-numpy
 Description: DMI/TI Generic BUFR decoding python module

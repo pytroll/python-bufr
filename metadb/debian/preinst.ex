@@ -1,5 +1,5 @@
 #!/bin/sh
-# preinst script for pybufr-metadb
+# preinst script for python-bufr-metadb
 #
 # see: dh_installdeb(1)
 

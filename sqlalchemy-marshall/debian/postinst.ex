@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for sqlalchemy-marshall
+# postinst script for python-sqlalchemy-marshall
 #
 # see: dh_installdeb(1)
 

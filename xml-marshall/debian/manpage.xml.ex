@@ -37,7 +37,7 @@ and docbook-xsl in your Build-Depends control field.
   <!ENTITY dhemail     "<email>krl@dmi.dk</email>">
   <!ENTITY dhusername  "Kristian Rune Larsen">
   <!ENTITY dhucpackage "<refentrytitle>XML-MARSHALL</refentrytitle>">
-  <!ENTITY dhpackage   "xml-marshall">
+  <!ENTITY dhpackage   "python-xml-marshall">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">

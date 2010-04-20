@@ -1,5 +1,5 @@
 #!/bin/sh
-# postrm script for pybufr-metadb
+# postrm script for python-bufr-metadb
 #
 # see: dh_installdeb(1)
 

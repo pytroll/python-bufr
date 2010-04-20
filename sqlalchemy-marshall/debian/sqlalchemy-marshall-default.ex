@@ -1,6 +1,6 @@
-# Defaults for sqlalchemy-marshall initscript
-# sourced by /etc/init.d/sqlalchemy-marshall
-# installed at /etc/default/sqlalchemy-marshall by the maintainer scripts
+# Defaults for python-sqlalchemy-marshall initscript
+# sourced by /etc/init.d/python-sqlalchemy-marshall
+# installed at /etc/default/python-sqlalchemy-marshall by the maintainer scripts
 
 #
 # This is a POSIX shell fragment

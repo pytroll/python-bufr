@@ -1,4 +1,4 @@
 #
-# Regular cron jobs for the xml-marshall package
+# Regular cron jobs for the python-xml-marshall package
 #
-0 4	* * *	root	xml-marshall_maintenance
+0 4	* * *	root	python-xml-marshall_maintenance

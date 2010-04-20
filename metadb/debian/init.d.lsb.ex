@@ -23,7 +23,7 @@
 # Suite 330, Boston, MA 02111-1307 USA
 #
 ### BEGIN INIT INFO
-# Provides:          pybufr-metadb
+# Provides:          python-bufr-metadb
 # Required-Start:    $network $local_fs
 # Required-Stop:     
 # Should-Start:      $named
@@ -38,10 +38,10 @@
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-DAEMON=/usr/sbin/pybufr-metadb # Introduce the server's location here
+DAEMON=/usr/sbin/python-bufr-metadb # Introduce the server's location here
 NAME=#PACKAGE              # Introduce the short server's name here
 DESC=#PACKAGE              # Introduce a short description here
-LOGDIR=/var/log/pybufr-metadb  # Log directory to use
+LOGDIR=/var/log/python-bufr-metadb  # Log directory to use
 
 PIDFILE=/var/run/$NAME.pid 
 
@@ -60,7 +60,7 @@ DODTIME=10              # Time to wait for the server to die, in seconds
                         # 'restart' will not work
                         
 LOGFILE=$LOGDIR/$NAME.log  # Server logfile
-#DAEMONUSER=pybufr-metadb   # Users to run the daemons as. If this value
+#DAEMONUSER=python-bufr-metadb   # Users to run the daemons as. If this value
                         # is set start-stop-daemon will chuid the server
 
 # Include defaults if available

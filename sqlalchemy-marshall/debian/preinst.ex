@@ -1,5 +1,5 @@
 #!/bin/sh
-# preinst script for sqlalchemy-marshall
+# preinst script for python-sqlalchemy-marshall
 #
 # see: dh_installdeb(1)
 

@@ -27,7 +27,7 @@ manpage.1: manpage.sgml
   <!ENTITY dhemail     "<email>krl@dmi.dk</email>">
   <!ENTITY dhusername  "Kristian Rune Larsen">
   <!ENTITY dhucpackage "<refentrytitle>XML-MARSHALL</refentrytitle>">
-  <!ENTITY dhpackage   "xml-marshall">
+  <!ENTITY dhpackage   "python-xml-marshall">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">

@@ -27,7 +27,7 @@ build-stamp: configure-stamp
 
 	# Add here commands to compile the package.
 	python setup.py build
-	#docbook-to-man debian/pybufr-transform.sgml > pybufr-transform.1
+	#docbook-to-man debian/python-bufr-transform.sgml > python-bufr-transform.1
 
 	touch $@
 
@@ -37,7 +37,7 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	rm -rf $(CURDIR)/debian/pybufr-transform
+	rm -rf $(CURDIR)/debian/python-bufr-transform
 
 
 	dh_clean 
@@ -48,8 +48,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# Add here commands to install the package into debian/pybufr-transform.
-	python setup.py install root=$(CURDIR)/debian/pybufr-transform
+	# Add here commands to install the package into debian/python-bufr-transform.
+	python setup.py install --root=$(CURDIR)/debian/python-bufr-transform
 
 
 # Build architecture-independent files here.

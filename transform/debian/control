@@ -1,11 +1,11 @@
-Source: pybufr-transform
+Source: python-bufr-transform
 Section: unknown
 Priority: extra
 Maintainer: Kristian Rune Larsen <krl@dmi.dk>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.2
 
-Package: pybufr-transform
+Package: python-bufr-transform
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: <insert up to 60 chars description>

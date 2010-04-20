@@ -1,4 +1,4 @@
 #
-# Regular cron jobs for the pybufr-transform package
+# Regular cron jobs for the python-bufr-transform package
 #
-0 4	* * *	root	pybufr-transform_maintenance
+0 4	* * *	root	python-bufr-transform_maintenance

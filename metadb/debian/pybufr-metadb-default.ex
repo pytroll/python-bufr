@@ -1,6 +1,6 @@
-# Defaults for pybufr-metadb initscript
-# sourced by /etc/init.d/pybufr-metadb
-# installed at /etc/default/pybufr-metadb by the maintainer scripts
+# Defaults for python-bufr-metadb initscript
+# sourced by /etc/init.d/python-bufr-metadb
+# installed at /etc/default/python-bufr-metadb by the maintainer scripts
 
 #
 # This is a POSIX shell fragment

@@ -6,9 +6,8 @@ from distutils.core import setup, Extension
 try:
     BUFR_LIBRARY_PATH=os.environ['BUFR_LIBRARY_PATH']
     BUFR_TABLES=os.environ['BUFR_TABLES']
-    NUMPY_INCLUDE_PATH=os.environ['NUMPY_INCLUDE_PATH']
 except KeyError, e:
-    print ("""Please define system variables 
+    print """Please define system variables 
             
             BUFR_LIBRARY_PATH, directory containing libbufr.a
             NUMPY_INCLUDE_PATH, directory containing numpy related include files
@@ -17,8 +16,23 @@ except KeyError, e:
             BUFR_TABLES, path to your BUFR tables, this can be changed
             runtime by changing the environment variable
             
-            """)
+            """
     sys.exit(1)
+
+default_np_path = '/usr/lib/python2.5/site-packages/numpy/core/include/'
+try:
+    NUMPY_INCLUDE_PATH=os.environ['NUMPY_INCLUDE_PATH']
+except:
+    if os.path.exists(default_np_path):
+        NUMPY_INCLUDE_PATH=default_np_path
+    else:
+        print """Please define system variable 
+            
+            NUMPY_INCLUDE_PATH, directory containing numpy related include files
+                                like numpy/arrayobject.h, numpy/arrayscalars.h, etc.
+            """
+        sys.exit(1)
+
 
 BUFRFile = Extension('bufr/_BUFRFile',
                      define_macros = [('DTABLE_PATH', BUFR_TABLES),],

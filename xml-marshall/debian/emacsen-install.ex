@@ -1,12 +1,12 @@
 #! /bin/sh -e
-# /usr/lib/emacsen-common/packages/install/xml-marshall
+# /usr/lib/emacsen-common/packages/install/python-xml-marshall
 
 # Written by Jim Van Zandt <jrv@debian.org>, borrowing heavily
 # from the install scripts for gettext by Santiago Vila
 # <sanvila@ctv.es> and octave by Dirk Eddelbuettel <edd@debian.org>.
 
 FLAVOR=$1
-PACKAGE=xml-marshall
+PACKAGE=python-xml-marshall
 
 if [ ${FLAVOR} = emacs ]; then exit 0; fi
 

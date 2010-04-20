@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for xml-marshall
+# postinst script for python-xml-marshall
 #
 # see: dh_installdeb(1)
 

@@ -1,12 +1,12 @@
 #! /bin/sh -e
-# /usr/lib/emacsen-common/packages/install/sqlalchemy-marshall
+# /usr/lib/emacsen-common/packages/install/python-sqlalchemy-marshall
 
 # Written by Jim Van Zandt <jrv@debian.org>, borrowing heavily
 # from the install scripts for gettext by Santiago Vila
 # <sanvila@ctv.es> and octave by Dirk Eddelbuettel <edd@debian.org>.
 
 FLAVOR=$1
-PACKAGE=sqlalchemy-marshall
+PACKAGE=python-sqlalchemy-marshall
 
 if [ ${FLAVOR} = emacs ]; then exit 0; fi
 

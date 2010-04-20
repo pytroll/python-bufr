@@ -8,15 +8,15 @@ version=3
 
 # Uncomment to examine a Webpage 
 # <Webpage URL> <string match>
-#http://www.example.com/downloads.php pybufr-transform-(.*)\.tar\.gz
+#http://www.example.com/downloads.php python-bufr-transform-(.*)\.tar\.gz
 
 # Uncomment to examine a Webserver directory
-#http://www.example.com/pub/pybufr-transform-(.*)\.tar\.gz
+#http://www.example.com/pub/python-bufr-transform-(.*)\.tar\.gz
 
 # Uncommment to examine a FTP server
-#ftp://ftp.example.com/pub/pybufr-transform-(.*)\.tar\.gz debian uupdate
+#ftp://ftp.example.com/pub/python-bufr-transform-(.*)\.tar\.gz debian uupdate
 
 # Uncomment to find new files on sourceforge, for debscripts >= 2.9
-# http://sf.net/pybufr-transform/pybufr-transform-(.*)\.tar\.gz
+# http://sf.net/python-bufr-transform/python-bufr-transform-(.*)\.tar\.gz
 
 

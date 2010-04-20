@@ -1,5 +1,5 @@
 #!/bin/sh
-# preinst script for pybufr-transform
+# preinst script for python-bufr-transform
 #
 # see: dh_installdeb(1)
 

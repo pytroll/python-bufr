@@ -8,15 +8,15 @@ version=3
 
 # Uncomment to examine a Webpage 
 # <Webpage URL> <string match>
-#http://www.example.com/downloads.php pybufr-metadb-(.*)\.tar\.gz
+#http://www.example.com/downloads.php python-bufr-metadb-(.*)\.tar\.gz
 
 # Uncomment to examine a Webserver directory
-#http://www.example.com/pub/pybufr-metadb-(.*)\.tar\.gz
+#http://www.example.com/pub/python-bufr-metadb-(.*)\.tar\.gz
 
 # Uncommment to examine a FTP server
-#ftp://ftp.example.com/pub/pybufr-metadb-(.*)\.tar\.gz debian uupdate
+#ftp://ftp.example.com/pub/python-bufr-metadb-(.*)\.tar\.gz debian uupdate
 
 # Uncomment to find new files on sourceforge, for debscripts >= 2.9
-# http://sf.net/pybufr-metadb/pybufr-metadb-(.*)\.tar\.gz
+# http://sf.net/python-bufr-metadb/python-bufr-metadb-(.*)\.tar\.gz
 
 
