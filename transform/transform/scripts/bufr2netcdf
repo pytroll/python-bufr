@@ -24,7 +24,7 @@
 __revision__ = 0.1
 
 
-from bufr.metadb import bufrmetadb 
+import bufr.metadb as bufrmetadb 
 from bufr.transform import bufr2netcdf
 
 import sys

@@ -57,7 +57,7 @@ def BUFR2NetCDF(instr_name, bufr_fn, nc_fn, dburl=None):
 
 
     # Create file object and connect to database
-    bfr = pybufr.BUFRFile(bufr_fn)
+    bfr = bufr.BUFRFile(bufr_fn)
     ncf = NetCDF.NetCDFFile(nc_fn,'w')
 
     conn = None
@@ -202,7 +202,7 @@ def BUFR2NetCDF(instr_name, bufr_fn, nc_fn, dburl=None):
 
                     if packable_2dim and packable_1dim:
                         if not scalars_handled:
-                            data = pybufr.pack_record(record)
+                            data = bufr.pack_record(record)
                             try:
                                 nc_var[ 0 ] = eval(var_type)(data)
                             except OverflowError, e:
@@ -218,14 +218,14 @@ def BUFR2NetCDF(instr_name, bufr_fn, nc_fn, dburl=None):
                         continue
 
                     elif packable_2dim:
-                        data = pybufr.pack_record(record)
+                        data = bufr.pack_record(record)
                         try:
                             nc_var[ count ] = eval(var_type)(data)
                         except OverflowError, e:
                             nc_var[ count ] = vname_map[record.index]['netcdf__FillValue']
                         continue
 
-                except pybufr.RecordPackError, e:
+                except bufr.RecordPackError, e:
                     print e
                     pass
                 
@@ -234,7 +234,7 @@ def BUFR2NetCDF(instr_name, bufr_fn, nc_fn, dburl=None):
                 data = record.data
                 if data.shape[ 0 ] != size:
                     fillvalue = vname_map[ record.index ][ 'netcdf__FillValue' ]
-                    data = pybufr.pad_record(data, size, fillvalue)
+                    data = bufr.pad_record(data, size, fillvalue)
                 
                 data = np.array(data, vname_map[ record.index ][ 'var_type' ]) 
                 nc_var[ count, : ] = data
