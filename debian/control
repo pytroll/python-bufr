@@ -2,11 +2,11 @@ Source: python-bufr
 Section: misc
 Priority: extra
 Maintainer: Kristian Rune Larsen <krl@dmi.dk>
-Build-Depends: debhelper (>= 5)
+Build-Depends: debhelper (>= 5), python-numpy, python-dev
 Standards-Version: 3.7.2
 
 Package: python-bufr
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, emos, python-numpy
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-numpy
 Description: DMI/TI Generic BUFR decoding python module
- Based on the ECMWF EMOS library. 
+ Based on the ECMWF EMOS or BUFRDC library. 

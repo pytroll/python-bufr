@@ -10,9 +10,6 @@ except KeyError, e:
     print """Please define system variables 
             
             BUFR_LIBRARY_PATH, directory containing libbufr.a
-            NUMPY_INCLUDE_PATH, directory containing numpy related include files
-                                like numpy/arrayobject.h, numpy/arrayscalars.h, etc.
-
             BUFR_TABLES, path to your BUFR tables, this can be changed
             runtime by changing the environment variable
             
