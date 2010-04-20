@@ -48,7 +48,7 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/python-bufr-metadb.
-	python setup.py install --root=$(CURDIR)/debian/python-bufr-metadbi --prefix=/opt
+	python setup.py install --root=$(CURDIR)/debian/python-bufr-metadb --prefix=/opt
 
 
 # Build architecture-independent files here.

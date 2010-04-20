@@ -7,6 +7,6 @@ Standards-Version: 3.7.2
 
 Package: python-sqlalchemy-marshall
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, xml-marshall, python-sqlalchemy
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-xml-marshall, python-sqlalchemy
 Description: DMI/TI Generic XML serialization for SQL Alchemy
  Provides functionality to make XML dumps of a SQL Alchemy database

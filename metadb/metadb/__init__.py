@@ -33,7 +33,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, backref, sessionmaker
 from sqlalchemy.orm.exc import *
 
-from sqlalchemy_marshall.sqlalchemy_marshall import *
+from sqlalchemy_marshall import *
 
 
 Base = declarative_base()
