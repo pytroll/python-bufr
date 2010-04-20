@@ -1,5 +1,5 @@
 #!/bin/sh
-# prerm script for pybufr
+# prerm script for python-bufr
 #
 # see: dh_installdeb(1)
 
