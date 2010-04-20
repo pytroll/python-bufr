@@ -10,7 +10,7 @@
 __revision__ = 0.1
 
 import bufr
-from bufr.metadb as bufrmetadb
+import bufr.metadb as bufrmetadb
 import sys
 import os
 import getopt
