@@ -9,6 +9,6 @@ setup(name='bufr-metadb',
       maintainer_email='krl@dmi.dk',
       package_dir = {'bufr/metadb': './metadb',},
       packages = ['bufr/metadb',],
-      scripts = ['metadb/scripts/import_bufr','metadb/scripts/export_bufr',],
+      scripts = ['metadb/scripts/import_bfr','metadb/scripts/export_bfr',],
      )
 
