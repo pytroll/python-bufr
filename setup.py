@@ -22,7 +22,7 @@ except KeyError, e:
 
 BUFRFile = Extension('bufr/_BUFRFile',
                      define_macros = [('DTABLE_PATH', BUFR_TABLES),],
-                     sources = ['pybufr/_BUFRFile.c',], 
+                     sources = ['bufr/_BUFRFile.c',], 
                      extra_compile_args = ['-O3', ], 
                      extra_link_args = [], 
                      libraries = ['bufr','gfortran',],
