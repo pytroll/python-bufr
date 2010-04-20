@@ -232,8 +232,12 @@ class SQLXMLMarshall:
         etree = ET.parse(xml_file)
         factory = self.get_factory()
         root_query = loads(etree.getroot(), factory)
-        for root_object in root_query:
-            self._update_from_xml(root_object)
+        try:
+            for root_object in root_query:
+                self._update_from_xml(root_object)
+        except TypeError, e:
+            # handle dumps not enclosed in Query tags
+            self._update_from_xml(root_query)
  
     def dump_xml(self, root, name=None, filename=sys.stdout):
         """ Prints a specific entry to a XML string """
