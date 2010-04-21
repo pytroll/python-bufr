@@ -184,7 +184,6 @@ def BUFR2NetCDF(instr_name, bufr_fn, nc_fn, dburl=None):
             try:
                 nc_name = vname_map[record.index]['netcdf_name']
             except KeyError, e:
-                print e
                 continue
             
             try:

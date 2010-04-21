@@ -90,14 +90,14 @@ if '.xml' in ifn:
 # Handle BUFR input
 #
 
-bfr = pybufr.BUFRFile(ifn)
+bfr = bufr.BUFRFile(ifn)
 
 # insert BUFR file
 for i in range(index):
     section = bfr.next()
 
 # get info from file
-bufr_info = pybufr.get_bfr_info(bfr)
+bufr_info = bufr.get_bfr_info(bfr)
 conn.insert_bufr_keys(instr,fglob,bufr_info, index)
 
 sys.exit(0)

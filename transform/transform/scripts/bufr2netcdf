@@ -35,7 +35,7 @@ if __name__ == '__main__':
     def usage():
         """ print basic usage and exit """
         print """USAGE: 
-        BUFR2NetCDF.py [-c database connection url] [-l] <instrument> <input bufr file> <output netcdf file >
+        bufr2netcdf [-c database connection url] [-l] <instrument> <input bufr file> <output netcdf file >
 
         -c: Set database url
         -l: dry run, lists instruments
