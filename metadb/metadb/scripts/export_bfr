@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+#
+#
+# python-bufr-metadb , BUFR variable translation database
+# 
+# Copyright (C) 2010  Kristian Rune Larsen
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+""" 
+    Exports entire database as xml
+
+"""
+
+__revision__ = 0.1
+
+import pybufr
+import bufr.metadb as bufrmetadb
+import sys
+import os
+import getopt
+
+
+def usage():
+    """Prints basic usage and exits"""
+    print """USAGE:
+    export_bfr [-hl] -c connection url -i instrument 
+   
+    ARGUMENTS:
+    -c  : connection url to database
+
+    OPTION:
+    -l : list available instruments
+    -h : this message
+    -i : only export selected instrument
+
+    Command will dump database to stdout as xml. 
+    
+    """
+    sys.exit(2)
+
+# main
+optlist, args = getopt.getopt(sys.argv[1:], 'c:i:hl')
+
+connection_url = None
+instr = None
+do_list = False
+
+for opts in optlist:
+    if opts[0] == '-c':
+        connection_url = opts[1]
+        continue
+    if opts[0] == '-i':
+        instr = opts[1]
+        continue
+    if opts[0] == '-l':
+        do_list = True
+        continue
+    if opts[0] == '-h':
+        usage()
+
+conn = None
+if connection_url is None:
+    usage()
+
+conn = bufrmetadb.BUFRDescDBConn( connection_url ) 
+
+# Print instrument names to stdout
+if do_list:
+    instrs = conn.get_instrument_names()
+    for i in instrs:
+        print i
+    sys.exit(0)
+
+# Dump all varables for specific instrument 
+if instr is not None:
+    conn.dump_xml(bufrmetadb.BUFRDesc, instr )
+    sys.exit(0)
+
+# Dump entire database
+conn.dump_xml(bufrmetadb.BUFRDesc )
+
+sys.exit(0)
+
+
+
+
+
+
+

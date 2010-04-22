@@ -1,0 +1,2 @@
+python:Versions=2.4, 2.3, 2.5
+python:Depends=python-support (>= 0.7.1)

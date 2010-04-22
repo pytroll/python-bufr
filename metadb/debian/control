@@ -1,0 +1,13 @@
+Source: python-bufr-metadb
+Section: misc
+Priority: extra
+Maintainer: Kristian Rune Larsen <krl@dmi.dk>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: python-bufr-metadb
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-bufr, python-sqlalchemy-marshall
+Description: DMI/TI BUFR DB Interface package
+ Provides the interface layer for BUFR translation to variable 
+ mapping database.
