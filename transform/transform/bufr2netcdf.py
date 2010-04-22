@@ -116,7 +116,8 @@ def BUFR2NetCDF(instr_name, bufr_fn, nc_fn, dburl=None):
     dims = {}
     for key in vname_map.keys():
         var_info_dict = vname_map[key]
-        dims[ var_info_dict['netcdf_dimension_name'] ] = int( var_info_dict['netcdf_dimension_length'])
+        if 'netcdf_name' in var_info_dict:
+            dims[ var_info_dict['netcdf_dimension_name'] ] = int( var_info_dict['netcdf_dimension_length'])
     for dim_key, dim_size in dims.iteritems():
         ncf.createDimension(dim_key, dim_size)
    
