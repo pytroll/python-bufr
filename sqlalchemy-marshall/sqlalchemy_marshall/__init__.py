@@ -117,14 +117,15 @@ class SQLXMLMarshall:
             # the object has an assigned id, we need to update it
             #
             if type(obj.id) == int:
-                try:
-                    dobj = self._session.query(obj.__class__).filter(obj.__class__.id == obj.id).one()
-                    dobj = assign_attrs(obj, dobj)
-                    self._session.update(dobj, update=True )
-                    self._session.commit()
-                    return dobj.id
-                except Exception, e:
-                    self._session.rollback()
+                ##try:
+                dobj = self._session.query(obj.__class__).filter(obj.__class__.id == obj.id).one()
+                dobj = assign_attrs(obj, dobj)
+                self._session.update(dobj)
+                self._session.commit()
+                return dobj.id
+                ##except Exception, e:
+                ##    print "Error: %s, unable to update entry" % e
+                ##    self._session.rollback()
         except AttributeError:
             pass
         
