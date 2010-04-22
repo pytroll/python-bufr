@@ -103,7 +103,7 @@ def get_type( record ):
     """
     eps = np.finfo(np.float).eps
     try:
-        if True in (np.floor(record.data) - record.data > 10*eps):
+        if True in ( abs(np.floor(record.data) - record.data) > 10*eps):
             return 'float'
         return 'int'
     except TypeError:
