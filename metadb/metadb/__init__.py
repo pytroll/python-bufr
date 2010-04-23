@@ -25,7 +25,7 @@ Variable descriptions of bufr file entries
 
 __revision__ = 0.1
 
-import pybufr
+import bufr
 
 import sqlalchemy
 from sqlalchemy import *
@@ -467,7 +467,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
             name = entry.name
             unit = entry.unit
             nc_unit = unit.lower().strip()
-            nc_name = pybufr.netcdf_compliant_name(name, entry.index)
+            nc_name = bufr.netcdf_compliant_name(name, entry.index)
 
             bvar = BUFRVar(bufr_desc, name, entry.index)	
             self._session.add(bvar)
