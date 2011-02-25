@@ -3,20 +3,8 @@ import os
 import sys
 from distutils.core import setup, Extension 
 
-try:
-    BUFR_LIBRARY_PATH=os.environ['BUFR_LIBRARY_PATH']
-    BUFR_TABLES=os.environ['BUFR_TABLES']
-except KeyError, e:
-    print """Please define system variables 
-            
-            BUFR_LIBRARY_PATH, directory containing libbufr.a
-            BUFR_TABLES, path to your BUFR tables, this can be changed
-            runtime by changing the environment variable
-            
-            """
-    sys.exit(1)
-
-default_np_path = '/usr/lib/python2.5/site-packages/numpy/core/include/'
+#default_np_path = '/usr/lib/python2.5/site-packages/numpy/core/include/'
+default_np_path = '/usr/share/pyshared/numpy/core/include/'
 try:
     NUMPY_INCLUDE_PATH=os.environ['NUMPY_INCLUDE_PATH']
 except:
@@ -32,14 +20,12 @@ except:
 
 
 BUFRFile = Extension('bufr/_BUFRFile',
-                     define_macros = [('DTABLE_PATH', BUFR_TABLES),],
                      sources = ['bufr/_BUFRFile.c',], 
                      extra_compile_args = ['-O3', ], 
                      extra_link_args = [], 
-                     libraries = ['bufr','gfortran',],
+                     libraries = ['emos','gfortran',],
                      library_dirs = ['/usr/lib','/usr/local/lib',
-                                     '/usr/lib64','/usr/local/lib64',
-                                     BUFR_LIBRARY_PATH, ],
+                                     '/usr/lib64','/usr/local/lib64',],
                      include_dirs = ['/usr/include',
                                      '/usr/local/include',
                                      NUMPY_INCLUDE_PATH])
