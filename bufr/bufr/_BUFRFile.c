@@ -35,6 +35,7 @@
 
 
 static int my_ref = 0;
+int blength = 15000;
 
 /* Extern fortran call*/
 extern int readbufr(FILE *, char *, int *); 
@@ -245,7 +246,7 @@ static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) 
 	_BUFRFile_BUFRFileObject *self = (_BUFRFile_BUFRFileObject *) type->tp_alloc(type, 0);
 	self->inpfp = NULL;
 
-	self->bufr_message0 = PyMem_New(char,15000);
+	self->bufr_message0 = PyMem_New(char,blength);
 	self->ksup =  PyMem_New(int, 9);
 	self->ksec0 = PyMem_New(int,3);
 	self->ksec1 = PyMem_New(int,40);
@@ -337,7 +338,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
     }
 
 	/*********** Read in bufr messages ***********/
-	int length = 15000;
+    int length = blength;
 	int kerr = 0;
 	int * kbuff;
 	int status = 0; /*status for reading one new entry */
