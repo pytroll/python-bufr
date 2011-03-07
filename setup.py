@@ -21,7 +21,7 @@ except:
 ##,'-DNPY_SIZE_OF_DOUBLE=8'
 BUFRFile = Extension('bufr/_BUFRFile',
                      sources = ['bufr/_BUFRFile.c',], 
-                     extra_compile_args = ['-O0','-g3'], 
+                     extra_compile_args = ['-O3','-g'], 
                      extra_link_args = [], 
                      libraries = ['emos','gfortran',],
                      library_dirs = ['/usr/lib','/usr/local/lib','/opt/lib/emos',

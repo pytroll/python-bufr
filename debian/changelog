@@ -1,4 +1,10 @@
-python-bufr (0.1-6) unstable; urgency=low
+python-bufr (0.2-0) unstable; urgency=low
+
+  * x64 version working
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 07 Mar 2011 15:23:45 +0000
+
+python-bufr (0.1-8) unstable; urgency=low
 
   * Buildt aginst new emos 377 library
 
