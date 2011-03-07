@@ -7,6 +7,6 @@ Standards-Version: 3.7.2
 
 Package: python-bufr
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, python-numpy
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-numpy, emos
 Description: DMI/TI Generic BUFR decoding python module
  Based on the ECMWF EMOS or BUFRDC library. 
