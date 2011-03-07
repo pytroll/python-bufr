@@ -35,7 +35,7 @@
 
 
 static int my_ref = 0;
-int blength = 15000;
+int blength = 1000000;
 
 /* Extern fortran call*/
 extern int readbufr(FILE *, char *, int *); 
@@ -338,7 +338,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
     }
 
 	/*********** Read in bufr messages ***********/
-    int length = blength;
+    	int length = blength;
 	int kerr = 0;
 	int * kbuff;
 	int status = 0; /*status for reading one new entry */
