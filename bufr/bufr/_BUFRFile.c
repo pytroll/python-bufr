@@ -480,9 +480,13 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 		 */
 
 		/* Create data array */
-		int dimensions[1];
+		npy_intp dimensions[1];
 		dimensions[0]=nsup;
         bdata = PyArray_SimpleNew(1, dimensions, PyArray_DOUBLE);
+        if (bdata == NULL) {
+            PyErr_SetString(_BUFRFile_BUFRFileError, "Unable to retrieve BUFR data");
+            return NULL;
+        }
         PyObject * tmp_bdata = PyArray_SimpleNewFromData(1, dimensions,PyArray_DOUBLE, (void*) (self->values + s*nsup));
         PyArray_CopyInto((PyArrayObject *) bdata, (PyArrayObject *) tmp_bdata);
         Py_XDECREF(tmp_bdata);
