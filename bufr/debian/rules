@@ -26,7 +26,7 @@ build-stamp: configure-stamp
 	dh_testdir
 
 	# Add here commands to compile the package.
-	python setup.py build
+	BUFR_LIBRARY_PATH=/opt/lib/emos BUFR_TABLES=/opt/lib/emos/bufrtables/ python setup.py build
 	#docbook-to-man debian/python-bufr.sgml > python-bufr.1
 
 	touch $@
@@ -48,7 +48,7 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/bufr.
-	python setup.py install --root=$(CURDIR)/debian/python-bufr --prefix=/opt
+	BUFR_LIBRARY_PATH=/opt/lib/emos BUFR_TABLES=/opt/lib/emos/bufrtables/ python setup.py install --root=$(CURDIR)/debian/python-bufr --prefix=/opt
 
 
 # Build architecture-independent files here.

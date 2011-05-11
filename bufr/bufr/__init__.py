@@ -58,14 +58,15 @@ class BUFRRecordInfo:
     dimension_name = None
     dimension_length = None
     fillvalue_double = 1.7e38 # standard BUFR fill value
+    fillvalue_float = fillvalue_double # standard BUFR fill value
     fillvalue_int = 2147483647 # standard BUFR fill value
-    type = 'int'
+    var_type = 'int'
 
     def __str__(self):
         """ Print string representation """
         ostr = ""
-        for k,v in self.__dict__.iteritems():
-            ostr = ostr + "%s : %s " % (k,v)
+        for key, value in self.__dict__.iteritems():
+            ostr = ostr + "%s : %s " % (key, value)
         return ostr
 
 def netcdf_compliant_name( name, sequence ):
@@ -76,7 +77,7 @@ def netcdf_compliant_name( name, sequence ):
     
     """
     name = name.strip().lower()
-    for i in ( '(', ')', ' ', '-',',','/','\\','%'):
+    for i in ( '(', ')', ' ', '-', ',', '/', '\\', '%'):
         name = name.replace(i, '_')
     return "%s_%d" % (name, sequence )
 
@@ -89,7 +90,7 @@ def netcdf_compliant_names( section ):
     """
     names = {} 
     for record in section:
-        names[record.index] =  netcdf_compliant_name(name, record.index)
+        names[record.index] =  netcdf_compliant_name(record.name, record.index)
     return names
 
 
@@ -124,7 +125,8 @@ def pack_record( record ):
         first_elem = record.data[0]
         eps = 0
         try:
-            eps = np.finfo(first_elem.__class__).eps # find machine epsilon for this type
+            # find machine epsilon for this type
+            eps = np.finfo(first_elem.__class__).eps 
         except ValueError:
             # Handle integers, eps=0
             pass
@@ -193,11 +195,11 @@ def get_bfr_info(bfr):
         info_obj.index = record.index
         try:
             pdata = pack_record(record) 
-            info_obj.type = pdata.__class__.__name__
+            info_obj.var_type = pdata.__class__.__name__
             info_obj.packable_2d = True
         except RecordPackError, e:
             info_obj.packable_2d = False
-            info_obj.type = get_type(record)
+            info_obj.var_type = get_type(record)
         try:
             info_obj.max_length = len(record.data)
         except TypeError, e:
@@ -223,23 +225,24 @@ def get_bfr_info(bfr):
 
 
             try:
-                N = len(record.data) # throws TypeError if not defined for record.data
+                # throws TypeError if not defined for record.data
+                N = len(record.data) 
                 if N > info_obj.max_length: 
                     info_obj.max_length = N
 
                 if info_obj.packable_2d:
                     pdata = pack_record(record)
-                    if info_obj.type is 'int':
-                        info_obj.type = pdata.__class__.__name__
+                    if info_obj.var_type is 'int':
+                        info_obj.var_type = pdata.__class__.__name__
 
             except TypeError, e:
                 info_obj.packable_2d = False
-                if info_obj.type is 'int':
-                    info_obj.type = record.data.__class__.__name__
+                if info_obj.var_type is 'int':
+                    info_obj.var_type = record.data.__class__.__name__
             except RecordPackError, e:
                 info_obj.packable_2d = False
-                if info_obj.type is 'int':
-                    info_obj.type = get_type(record)
+                if info_obj.var_type is 'int':
+                    info_obj.var_type = get_type(record)
         last_section = section
 
     # Resets the file handle
@@ -281,6 +284,7 @@ def pad_section( section, info_list ):
     """
     for record in section:
         info_object = info_list[record.index]
-        yield padded_array(record, info_object.dimension_length, info_object.fillvalue)
+        yield padded_array(record, info_object.dimension_length, 
+                info_object.fillvalue)
 
 

@@ -47,7 +47,7 @@ if __name__ == '__main__':
     dburl = None
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'c:lh',[])
+        optlist, args = getopt.getopt(sys.argv[1:], 'c:lh', [])
     except IndexError:
         usage()
    
@@ -82,8 +82,8 @@ if __name__ == '__main__':
         usage()
 
     if dburl is not None:
-        bufr2netcdf.BUFR2NetCDF(instr,bfn, ncfn, dburl=dburl)
+        bufr2netcdf.bufr2netcdf(instr, bfn, ncfn, dburl=dburl)
     else:
-        bufr2netcdf.BUFR2NetCDF(instr,bfn, ncfn)
+        bufr2netcdf.bufr2netcdf(instr, bfn, ncfn)
 
 
