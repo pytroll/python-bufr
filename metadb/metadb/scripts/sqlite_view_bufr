@@ -1,0 +1,19 @@
+
+# Create view in parameter database
+create view param_values as select 
+    bufr_desc.name as desc, 
+    bufr_var.name as var, 
+    bufr_var.id as varid, 
+    bufr_param_type.name as param, 
+    bufr_param.id as paramid, 
+    bufr_param.bparam_data as data 
+        from bufr_param 
+            inner join bufr_var on bufr_param.bufr_var_id = varid 
+            inner join bufr_param_type on bufr_param.bufr_param_type_id = bufr_param_type.id 
+            inner join bufr_desc on bufr_var.bdesc_id = bufr_desc.id
+
+CREATE TRIGGER update_parameter
+INSTEAD OF UPDATE ON param_values BEGIN 
+    UPDATE bufr_param set bparam_data = new.data where bufr_param.id = new.paramid;
+END;
+

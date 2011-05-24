@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+#
+# python-bufr-transform , BUFR variable translation 
+# 
+# Copyright (C) 2010  Kristian Rune Larsen
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+""" Dumps a BUFR file to JSON format  """
+
+import sys
+import getopt
+import json
+
+import bufr
+from bufr import BUFRFileEntry
+
+if __name__ == '__main__':
+
+    def usage():
+        """ print basic usage and exit """
+        print """USAGE: 
+        bufr2json   [ -s start index ] [ -e end index ] <input bufr file> <output json file >
+        """
+        sys.exit(2)
+
+
+    try:
+        optlist, args = getopt.getopt(sys.argv[1:], 'hs:e:',[])
+    except IndexError:
+        usage()
+  
+    start_index = 0
+    end_index = None
+    for opts in optlist:
+        if opts[0] == '-h':
+            usage()
+            continue
+        if opts[0] == '-s':
+            start_index = int(opts[1])
+            continue
+        if opts[0] == '-e':
+            end_index = int(opts[1])
+            continue
+    
+    try: 
+        bfn = args[0]
+        jfn = args[1]
+    except:
+        usage()
+
+    class BUFRFileEntryEncoder(json.JSONEncoder):
+        """ Simple class for encoding BUFRFileEntry
+        """
+        def default(self, obj):
+            if isinstance(obj, BUFRFileEntry):
+                return {'index': obj.index , 
+                        'name': obj.name, 
+                        'unit': obj.unit, 
+                        'data': obj.data.tolist() }
+            return json.JSONEncoder.default(self, obj)
+
+
+    bfr = bufr.BUFRFile(bfn)
+    jfp = open(jfn, 'w')
+    for i,entries in enumerate(bfr):
+        if i < start_index:
+            continue
+        if end_index:
+            if i > end_index:
+                break
+        for entry in entries:
+            json.dump(entry, fp=jfp, cls=BUFRFileEntryEncoder, sort_keys=True, indent=4)
+    jfp.close()
+
+

@@ -17,9 +17,9 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Python.h"
 #include <stdio.h> 
 #include <stdlib.h>
-#include "Python.h"
 #include "numpy/arrayobject.h"
 #include "structmember.h"
 
@@ -35,7 +35,7 @@
 
 
 static int my_ref = 0;
-int blength = 1000000;
+int blength = 15000;
 
 /* Extern fortran call*/
 extern int readbufr(FILE *, char *, int *); 
@@ -171,7 +171,7 @@ static PyMethodDef BUFRFileEntry_Methods[] = {
 
 static PyObject * BUFRFileEntry_str(_BUFRFile_BUFRFileEntryObject *self){
 
-    return PyString_FromFormat("%d: %s" , PyInt_AsLong(self->index), 
+    return PyString_FromFormat("%Zd: %s" , PyInt_AsLong(self->index), 
             PyString_AsString(self->name));
 }
 
@@ -193,7 +193,7 @@ static PyTypeObject _BUFRFile_BUFRFileEntryType = {
 		0,                        /* PyMappingMethods *tp_as_mapping; */
 		0,                        /* hashfunc tp_hash;    */
 		0,                        /* ternaryfunc tp_call;  */
-		BUFRFileEntry_str,       /* reprfunc tp_st;     */
+		(void*) BUFRFileEntry_str,       /* reprfunc tp_st;     */
 		0,                        /* tp_getattro  */
 		0,                        /* tp_setattro  */
 		0,                        /* tp_as_buffer */
@@ -338,7 +338,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
     }
 
 	/*********** Read in bufr messages ***********/
-    	int length = blength;
+    int length = blength;
 	int kerr = 0;
 	int * kbuff;
 	int status = 0; /*status for reading one new entry */

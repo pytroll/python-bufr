@@ -239,7 +239,6 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
 
     except ValueError, val_err:
         traceback.print_exc(file=sys.stdout)
-        import pdb; pdb.set_trace()
         print val_err
 
 
