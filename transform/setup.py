@@ -9,6 +9,7 @@ setup(name='bufr-transform',
       maintainer_email='krl@dmi.dk',
       packages = ['bufr/transform',],
       package_dir = {'bufr/transform': './transform',},
-      scripts = ['transform/scripts/bufr2netcdf',],
+      scripts = ['transform/scripts/bufr2netcdf',
+          'transform/scripts/bufr2netcdf4'],
      )
 
