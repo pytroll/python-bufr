@@ -1,0 +1,196 @@
+#!/usr/bin/env python
+#
+#
+#
+# Author Kristian Rune Larsen <krl@dmi.dk>
+
+
+""" 
+
+Utilities for inspecting and updating the BUFR to netcdf variable database
+
+"""
+
+import sys
+import os
+import getopt
+import csv
+
+from sqlalchemy.orm.exc import NoResultFound
+
+import bufr.metadb as bufrmetadb
+
+
+def usage():
+    """Prints basic usage and exits"""
+    print """USAGE:
+    import_bfr [-c connection url] [-l] [-i instrument_type [-Lp] ] 
+    
+    -l          :   list instrument types
+    -L          :   list bufr variable names and netcdf variable names
+    -i          :   instrument type
+    -v          :   variable name
+    -p          :   prints csv to stdout
+    -C          :   import names from csv
+
+    Provides an interface for making changes into the database
+    
+    """
+    sys.exit(2)
+
+# main
+optlist, args = getopt.getopt(sys.argv[1:], 'c:i:lLv:p:C:')
+
+
+if len(optlist) == 0:
+    print " Not enough arguments "
+    usage()
+
+connection_url = None
+instr_name = None
+variable = None
+do_var_list = False
+do_instr_list = False
+output_csv = None
+input_csv = None
+
+for opts in optlist:
+    if opts[0] == '-i':
+        instr_name = opts[1]
+        continue
+    if opts[0] == '-c':
+        connection_url = opts[1]
+        continue
+    if opts[0] == '-v':
+        variable = opts[1]
+        continue
+    if opts[0] == '-L':
+        do_var_list = True
+        continue
+    if opts[0] == '-l':
+        do_instr_list = True
+        continue
+    if opts[0] == '-C':
+        input_csv = opts[1]
+        continue
+    if opts[0] == '-p':
+        output_csv = opts[1]
+        continue
+
+# 
+# Start connection to database
+#
+
+conn = None
+if connection_url is None:
+    conn = bufrmetadb.BUFRDescDBConn()
+else:
+    conn = bufrmetadb.BUFRDescDBConn( connection_url ) 
+
+# Print instrument names to stdout
+if do_instr_list:
+    instrs = conn.get_instrument_names()
+    for i in instrs:
+        print i
+    sys.exit(0)
+
+
+# print variable names to stdout
+if do_var_list:
+    instr = conn.get_instrument(instr_name)
+    for bvar in instr.bufr_var:
+        for param in bvar.bufr_param:
+            if param.bufr_param_type.name != 'netcdf_name':
+                continue
+            nc_name = param.get_data()
+            print "%s : %s" % (bvar.name, nc_name)
+    sys.exit(0)
+
+if output_csv:
+    instr = conn.get_instrument(instr_name)
+    bvar = instr.bufr_var[0]
+    param_type_names = [pt for pt in conn.get_variable_datatypes(instr, bvar)\
+            if pt.startswith('netcdf') or pt == 'var_type' or \
+            pt ==  "packable_1dim" or \
+            pt ==  "packable_2dim" ]
+    param_value_writer = csv.writer(open(output_csv,'wb'))
+    param_value_writer.writerow(['bufr_var.id', ' bufr_var.name', 
+        'bufr_var.seq'] + param_type_names )
+    for bvar in instr.bufr_var:
+        # only write values if netcdf_name parameter exists
+        netcdf_name = False
+        for param in bvar.bufr_param:
+            if param.bufr_param_type.name == 'netcdf_name':
+                netcdf_name = True
+                break
+        if netcdf_name:
+            param_value_writer.writerow([bvar.id, bvar.name, bvar.seq] + 
+                    [param.get_data() for param in bvar.bufr_param if \
+                            param.bufr_param_type.name.startswith('netcdf') or\
+                            param.bufr_param_type.name == 'var_type' or\
+                            param.bufr_param_type.name == 'packable_1dim' or\
+                            param.bufr_param_type.name == 'packable_2dim'] )
+    sys.exit(0)
+
+if input_csv:
+    instr = conn.get_instrument(instr_name)
+    param_reader = csv.reader(open(input_csv, 'rb'))
+    param_type_names = param_reader.next()[3:] # remove bufr_var id and name
+    for row_data in param_reader:
+        bvar_id = row_data[0]
+        bvar_name = row_data[1]
+        for param_name, param_data in zip(param_type_names, 
+               row_data[3:]):
+            try:
+                param = conn.get_variable_param(instr_name, bvar_id, param_name)
+            except NoResultFound, error:
+                # Create new parameter if it does not exist
+                bvar = conn.get_variable(var_id=bvar_id)
+                if bvar is None:
+                    raise ValueError("Cannot assign parameter to variable")
+                param_type = conn.get_param_type(param_name)
+                param = bufrmetadb.BUFRParam(param_type, str(param_data), bvar)
+                conn._session.add(param)
+                print "Added parameter %s " % param 
+                continue
+
+            if len(param_data) == 0 :
+                conn._session.delete(param)
+                continue
+            if param_data == 'True':
+                param_data = 1
+            elif param_data == 'False':
+                param_data = 0
+            param.bparam_data = str(param_data)
+
+    conn.save()
+    sys.exit(0)
+
+
+def assign_param_interactive(bvar, param):
+    global conn
+    print "BUFR name: %s, parameter name %s" % (bvar.name, param.get_data())
+    var = raw_input("Enter new value (empty string deletes object): ")
+    if len(var) == 0:
+        conn._session.delete(param)
+    param.bparam_data = str(var)
+
+def assign_variable_parameters(bvar, name_filter=None):
+    """ Assign parameter value or delete parameter value """
+    for param in bvar.bufr_param:
+        if name_filter:
+            if param.bufr_param_type.name != name_filter:
+                continue
+        assign_param_interactive(bvar, param)
+
+
+instr = conn.get_instrument(instr_name)
+for bvar in instr.bufr_var:
+    assign_variable_parameters(bvar)
+
+conn.save()
+
+sys.exit(0)
+
+
+
