@@ -35,27 +35,32 @@
 
 
 static int my_ref = 0;
-int blength = 15000;
+int blength = 512000;
 
 /* Extern fortran call*/
 extern int readbufr(FILE *, char *, int *); 
-extern void bus012_(int*, int *, int *, int * , int *, int * , int *);
-extern void bufrex_(int *, 
-                    long *, 
-                    int * , 
-                    int * , 
-                    int * , 
-                    int *, 
-                    int * , 
-                    int *,
-                    int *, 
-                    char *, 
-                    char * , 
-                    int *, 
-                    double *, 
-                    char *, 
-                    int *);
-
+extern void bus012_(int* kbufl, 
+        int * kbuff, 
+        int * ksup, 
+        int * ksec0, 
+        int * ksec1, 
+        int * ksec2, 
+        int * kerr);
+extern void bufrex_(int * kbufl, 
+        int * kbuff, 
+        int * ksup, 
+        int * ksec0, 
+        int * ksec1, 
+        int * ksec2, 
+        int * ksec3, 
+        int * ksec4,
+        int * kelem, 
+        char * cnames, 
+        char * cunits, 
+        int * kvals, 
+        double * values, 
+        char * cvalues, 
+        int * kerr);
 
 int find_entry_type(double * data , int len) {
 	/* Figure out type double or int */
@@ -236,7 +241,14 @@ typedef struct {
 	char *cnames, *cunits, *cvals;
 	double *values;
 	int Nbpw;
-	int kelem, kvals, icode; /*number of elements, values, */
+	int kelem, kvals; /*number of elements, values, */
+
+    
+    // to hold basic information from BUFR section 1
+    int eddition, centre, update_sequence, message_type
+        ,message_sub_type, local_table_version, year,month, day, hour ,minute, 
+        master_table, master_table_version;
+
 
 } _BUFRFile_BUFRFileObject;
 
@@ -265,6 +277,21 @@ static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) 
 	self->cunits = PyMem_New(char,KELEM*24);
 	/*cvals , charater values ... not suppoted yet */
 	self->cvals = PyMem_New(char,KVALS*80); 
+
+
+    self->eddition = 
+        self->centre = 
+        self->update_sequence = 
+        self->message_type = 
+        self->message_sub_type = 
+        self->local_table_version = 
+        self->year = 
+        self->month = 
+        self->day = 
+        self->hour = 
+        self->minute = 
+        self->master_table = 
+        self->master_table_version = 0;
 
 	return (PyObject *) self;
 }
@@ -315,7 +342,6 @@ static int BUFRFile_init(_BUFRFile_BUFRFileObject *self, PyObject *args, PyObjec
 	}
 	self->kelem = KELEM;
 	self->kvals = KVALS;
-	self->icode = 0;
 
     self->filename = inp_filename;
     Py_XINCREF(self->filename);
@@ -382,21 +408,38 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 	else
 		self->kelem = KELEM;
 
-	if ( self->kelem > KELEM ) self->kelem = KELEM;
+	if ( self->kelem > KELEM ) 
+        self->kelem = KELEM;
+
+    // Get basic information from BUFR section 1
+    self->eddition = self->ksec1[3];
+    self->centre = self->ksec1[4];
+    self->update_sequence = self->ksec1[5];
+    self->message_type = self->ksec1[7];
+    self->message_sub_type = self->ksec1[8];
+    self->local_table_version = self->ksec1[9];
+    self->year = self->ksec1[10];
+    self->month = self->ksec1[11];
+    self->day = self->ksec1[12];
+    self->hour = self->ksec1[13];
+    self->minute = self->ksec1[14];
+    self->master_table = self->ksec1[15];
+    self->master_table_version = self->ksec1[16];
+
 	kerr = 0;
 	bufrex_(&length,
-            ( long * ) kbuff,
+            ( int * ) kbuff,
             self->ksup,
             self->ksec0,
             self->ksec1,
             self->ksec2,
             self->ksec3,
             self->ksec4,
-			&(self->kelem), 
+            &(self->kelem), 
             self->cnames, 
             self->cunits ,
             &(self->kvals),
-			self->values, 
+            self->values, 
             self->cvals,
             &kerr);
 
@@ -562,8 +605,13 @@ static PyObject * BUFRFile_next(_BUFRFile_BUFRFileObject *self) {
 }
 
 static PyObject * BUFRFile_reset(_BUFRFile_BUFRFileObject *self) {
+    /*
     BUFRFile_close(self);
 	self->inpfp = fopen(PyString_AsString(self->filename), "rb");
+    */
+
+    rewind(self->inpfp);
+    //fseek(self->inpfp, 0, SEEK_SET);
     if (!self->inpfp) {
         PyErr_SetString(_BUFRFile_BUFRFileError, "Unable to reset file");
         return NULL;
@@ -604,12 +652,25 @@ static PyObject * BUFRFile_keys(_BUFRFile_BUFRFileObject *self) {
 
 static PyMemberDef _BUFRFile_Members[] = {
     {"filename", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileObject, filename), 0, "filename"},
+    {"eddition" , T_INT, offsetof(_BUFRFile_BUFRFileObject, eddition), 0, "eddition"},
+    {"centre" , T_INT, offsetof(_BUFRFile_BUFRFileObject, centre), 0, "centre"},
+    {"update_sequence" , T_INT, offsetof(_BUFRFile_BUFRFileObject, update_sequence), 0, "update_sequence"},
+    {"message_type" , T_INT, offsetof(_BUFRFile_BUFRFileObject, message_type), 0, "message_type"},
+    {"message_sub_type" , T_INT, offsetof(_BUFRFile_BUFRFileObject, message_sub_type), 0, "message_sub_type"},
+    {"local_table_version" , T_INT, offsetof(_BUFRFile_BUFRFileObject, local_table_version), 0, "local_table_version"},
+    {"year" , T_INT, offsetof(_BUFRFile_BUFRFileObject, year), 0, "year"},
+    {"month" , T_INT, offsetof(_BUFRFile_BUFRFileObject, month), 0, "month"},
+    {"day" , T_INT, offsetof(_BUFRFile_BUFRFileObject, day), 0, "day"},
+    {"hour", T_INT, offsetof(_BUFRFile_BUFRFileObject, hour), 0, "hour"},
+    {"minute", T_INT, offsetof(_BUFRFile_BUFRFileObject, minute), 0, "minute"},
+    {"master_table", T_INT, offsetof(_BUFRFile_BUFRFileObject, master_table), 0, "master_table"},
+    {"master_table_version", T_INT, offsetof(_BUFRFile_BUFRFileObject, master_table_version), 0, "master_table_version"},
     {NULL}  /* Sentinel */
 };
 
 static PyMethodDef _BUFRFile_Methods[] = {
 	{ "read", (void*) BUFRFile_read, METH_NOARGS, "Reads a subset of the BUFR file" }, 
-	{ "close", (void*) BUFRFile_close, METH_NOARGS, "Closes input BUFR file"},
+	/*{ "close", (void*) BUFRFile_close, METH_NOARGS, "Closes input BUFR file"},*/
 	{ "next",  (void*) BUFRFile_next, METH_NOARGS, "Reads next subset, for python iterator."},
 	{ "keys", (void*) BUFRFile_keys, METH_NOARGS, "Returns a list of the BUFR file variables."},
 	{ "reset", (void*) BUFRFile_reset, METH_NOARGS, "Resets the BUFR file pointer to initial position."},
