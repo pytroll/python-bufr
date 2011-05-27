@@ -32,8 +32,9 @@ import traceback
 import numpy as np
 from Scientific.IO import NetCDF
 
-import bufr.metadb as bufrmetadb 
+import bufr.metadb 
 import bufr
+
 
 class BUFR2NetCDFError(Exception):
     """ Simple exception for handeling errors """
@@ -195,6 +196,8 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
                         traceback.print_exc(file=sys.stdout)
+                        print data
+                        print nc_var
                         nc_var[ 0 ] = vname_map[record.index]\
                                 ['netcdf__FillValue']
                 return
@@ -211,6 +214,8 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
                     nc_var[ count ] = eval(var_type)(data)
                 except OverflowError, overflow_error:
                     traceback.print_exc(file=sys.stdout)
+                    print data
+                    print nc_var
                     nc_var[ count ] = vname_map[record.index]\
                             ['netcdf__FillValue']
                 return
@@ -247,26 +252,22 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """
     
     # Create file object and connect to database
-    bfr = bufr.BUFRFile(bufr_fn)
-    try:
-        os.remove(nc_fn)
-    except OSError:
-        traceback.print_exc(file=sys.stdout)
-        pass
-    
     ncf = NetCDF.NetCDFFile(nc_fn,'w')
+    bfr = bufr.BUFRFile(bufr_fn)
 
     conn = None
     if dburl is not None:
-        conn = bufrmetadb.BUFRDescDBConn(dburl)
+        conn = bufr.metadb.BUFRDescDBConn(dburl)
     else:
-        conn = bufrmetadb.BUFRDescDBConn()
+        conn = bufr.metadb.BUFRDescDBConn()
 
     instr = conn.get_instrument(instr_name)
 
     #Get bufr record sections from database
     bstart = instr.bufr_record_start
     bend = instr.bufr_record_end
+    
+    bfr.reset()
 
     # Read BUFR file keys and get corresponding NetCDF names from 
     # from the database. Fast forward to record start. 
@@ -292,6 +293,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     global_var_attrs = conn.get_netcdf_global_attrs(instr_name)
     for record in records:
         if record.name in global_var_attrs:
+            print "attri %s" % record.name
             setattr(ncf, global_var_attrs[record.name], "%s" % \
                     record.data)
 
@@ -305,13 +307,14 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     #
     # Insert data into variables
     #
-    
+  
     bfr.reset()
+    bfr.next()
     count = -1
     scalars_handled = False
     for section in bfr:
         count = count + 1 
-        ncf.sync()
+        ##ncf.sync()
         # manage record boundaries... 
         if count < bstart: 
             continue
@@ -324,8 +327,10 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
                 nc_var = ncf.variables[vname_map[record.index]['netcdf_name']]
             except KeyError:
                 continue
-            
+           
             _insert_record(vname_map, nc_var, record, scalars_handled, count)
+        if count > 10:
+            break
 
         # we have inserted the first bufr section and hence all variables that
         # can be packed into scalars or per scan vectors should be accounted for

@@ -226,7 +226,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
     def __init__(self, dburl='sqlite:///bufr_var_1.db'):
         """Initiates singleton connection class. Creates database if not
         existent"""
-        super(BUFRDescDBConn,self).__init__(dburl)
+        super(BUFRDescDBConn, self).__init__(dburl)
 
         global Base
         Base.metadata.create_all(self._engine)
@@ -320,8 +320,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
     
     def get_instruments(self):
         """Returns all instruements """
-        return  self._session.query(BUFRDesc).filter(BUFRDesc.name ==
-                name).all()
+        return  self._session.query(BUFRDesc).all()
 
     def get_instrument_names(self):
         """ Returns a list of all available parameter types """
@@ -337,7 +336,8 @@ class BUFRDescDBConn(SQLXMLMarshall):
             res.append(i.description)
         return res
    
-    def get_variable(self, instr_name=None, var_name=None, var_seq=None, var_id=None):
+    def get_variable(self, instr_name=None, var_name=None, 
+            var_seq=None, var_id=None):
         """ name is not secure !!! 
         """
         var = None
@@ -355,7 +355,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
         return var
 
 
-    def get_variable_datatypes(self, instr ,bvar):
+    def get_variable_datatypes(self, instr , bvar):
         """ Returns a list of datatype corresponding to 
         instrument, variable combination
         """
@@ -411,8 +411,8 @@ class BUFRDescDBConn(SQLXMLMarshall):
         res = []
         variables = self._session.query(BUFRVar).join(BUFRDesc).\
                 filter(BUFRDesc.name == instr_name)
-        for v in variables:
-            res.append(v.name)
+        for bufr_var in variables:
+            res.append(bufr_var.name)
         return res
     
     #
@@ -423,37 +423,37 @@ class BUFRDescDBConn(SQLXMLMarshall):
         """ Returns a list of netcdf values corresponding to a bufr variable
         name 
         """
-        param = self._session.query(BUFRParam).\
+        bufr_params = self._session.query(BUFRParam).\
                 join(BUFRVar).join(BUFRDesc).join(BUFRParamType).\
                 filter(BUFRDesc.name == instr_name).\
                 filter(BUFRVar.seq == bufr_var_seq)
 
         nc_att = {}
-        for p in param:
+        for bufr_param in bufr_params:
             
-            if p.bufr_param_type.name == 'packable_1dim':
-                nc_att[p.bufr_param_type.name] = p.get_data()
+            if bufr_param.bufr_param_type.name == 'packable_1dim':
+                nc_att[p.bufr_param_type.name] = bufr_param.get_data()
                 continue
-            if p.bufr_param_type.name == 'packable_2dim':
-                nc_att[p.bufr_param_type.name] = p.get_data()
+            if bufr_param.bufr_param_type.name == 'packable_2dim':
+                nc_att[p.bufr_param_type.name] = bufr_param.get_data()
                 continue
-            if p.bufr_param_type.name == 'var_type':
-                nc_att[p.bufr_param_type.name] = p.get_data()
+            if bufr_param.bufr_param_type.name == 'var_type':
+                nc_att[p.bufr_param_type.name] = bufr_param.get_data()
                 continue
             
             # default guard
-            if not p.bufr_param_type.name.startswith('netcdf_'): 
+            if not bufr_param.bufr_param_type.name.startswith('netcdf_'): 
                 continue
 
-            nc_att[p.bufr_param_type.name] = p.get_data()
+            nc_att[bufr_param.bufr_param_type.name] = bufr_param.get_data()
         return nc_att
 
-    def get_netcdf_global_attrs(self,instr_name):
+    def get_netcdf_global_attrs(self, instr_name):
         """ Returns a dict of bufr-variables/attr-names that should be
         treated like global attributes.
         
         """
-        bparams = self._session.query(BUFRParam).join(BUFRVar).\
+        bufr_params = self._session.query(BUFRParam).join(BUFRVar).\
                 join(BUFRDesc).join(BUFRParamType).\
                 filter(BUFRDesc.name == instr_name).\
                 filter(BUFRParamType.name == 'netcdf_global_attribute')
@@ -462,8 +462,8 @@ class BUFRDescDBConn(SQLXMLMarshall):
         # and param values
         #
         res = {} 
-        for bp in bparams:
-            res[bp.bufr_var.name] = bp.get_data()
+        for bufr_param in bufr_params:
+            res[bufr_param.bufr_var.name] = bufr_param.get_data()
         return res
 
     def get_bufr_name(self, instr_name, netcdf_name):
@@ -489,17 +489,17 @@ class BUFRDescDBConn(SQLXMLMarshall):
         return bvar.seq 
 
 
-    def get_binary_dump_variables(self,instr_name):
+    def get_binary_dump_variables(self, instr_name):
         """ Easy access to varables used for binary dumps 
         
         """
-        params = self._session.query(BUFRParam).join(BUFRVar).\
+        bufr_params = self._session.query(BUFRParam).join(BUFRVar).\
                 join(BUFRDesc).join(BUFRParamType).\
                 filter(BUFRDesc.name == instr_name).\
                 filter(BUFRParamType.name == 'bin_file')
         
         file_columns = {} 
-        for p in params:
+        for p in bufr_params:
             bv = p.bufr_var
             bin_column = None
             for bp in bv.bufr_param:
