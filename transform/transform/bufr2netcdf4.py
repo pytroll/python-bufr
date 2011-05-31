@@ -210,7 +210,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
 
         except bufr.RecordPackError, pack_error:
             logging.exception("Unable to pack data for %s" %\
-                    ( data, vname_map[record.index]['netcdf_name'], ))
+                    ( vname_map[record.index]['netcdf_name'], ))
 
         
         
