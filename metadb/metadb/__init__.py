@@ -23,18 +23,16 @@ Variable descriptions of bufr file entries
 
 """
 
-__revision__ = 0.1
-
-import bufr
+import re
 
 import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, backref, sessionmaker
 from sqlalchemy.orm.exc import *
-
 from sqlalchemy_marshall import *
 
+import bufr
 
 Base = declarative_base()
 
@@ -213,6 +211,8 @@ class BUFRParam(Base):
 class NmFactory:
     """ Namespace factory, passes namespace to generating xml import """
     def eval(self, string):
+        """ Necessary for xml import to generate objects based on xml tags in
+        the correct namespace """
         return eval(string)
 
 
@@ -312,12 +312,17 @@ class BUFRDescDBConn(SQLXMLMarshall):
             res.append(i.name)
         return res
 
-    def get_instrument(self, name):
-        """ Get instrument entry """
-        instr = self._session.query(BUFRDesc).filter(BUFRDesc.name ==
-                name).one() 
+   
+    #
+    # Instrument descriptions
+    #
+    def get_instrument(self, instr_name):
+        """ Returns a list of variable names corresponding to instrument name
+        """
+        instr = self._session.query(BUFRDesc).\
+                filter(BUFRDesc.name == instr_name).one()
         return instr
-    
+
     def get_instruments(self):
         """Returns all instruements """
         return  self._session.query(BUFRDesc).all()
@@ -335,7 +340,31 @@ class BUFRDescDBConn(SQLXMLMarshall):
         for i in self._session.query(BUFRDesc):
             res.append(i.description)
         return res
-   
+
+    def get_instrument_from_filename(self, input_bufr_filename):
+        """ Searches through database BUFR file descriptions to find instrument
+        id which regex matches the input BUFR filename """
+        instruments = self.get_instruments()
+        for instrument in instruments:
+            if re.match(instrument.fn_regex, 
+                    os.path.basename(input_bufr_filename)) is not None:
+                return instrument.name
+        raise ValueError("Filename not matched")
+
+    def get_instrument_variables(self, instr_name):
+        """ Returns a list of variable names corresponding to instrument name
+        """
+        res = []
+        variables = self._session.query(BUFRVar).join(BUFRDesc).\
+                filter(BUFRDesc.name == instr_name)
+        for bufr_var in variables:
+            res.append(bufr_var.name)
+        return res
+
+    # 
+    # Variables
+    # 
+
     def get_variable(self, instr_name=None, var_name=None, 
             var_seq=None, var_id=None):
         """ name is not secure !!! 
@@ -398,23 +427,6 @@ class BUFRDescDBConn(SQLXMLMarshall):
                 filter(BUFRParamType.name == ptype_name).one()
         return param.get_data() 
 
-    def get_instrument(self, instr_name):
-        """ Returns a list of variable names corresponding to instrument name
-        """
-        instr = self._session.query(BUFRDesc).\
-                filter(BUFRDesc.name == instr_name).one()
-        return instr
-
-    def get_instrument_variables(self, instr_name):
-        """ Returns a list of variable names corresponding to instrument name
-        """
-        res = []
-        variables = self._session.query(BUFRVar).join(BUFRDesc).\
-                filter(BUFRDesc.name == instr_name)
-        for bufr_var in variables:
-            res.append(bufr_var.name)
-        return res
-    
     #
     # More specific get methods for easy access
     #
@@ -432,13 +444,13 @@ class BUFRDescDBConn(SQLXMLMarshall):
         for bufr_param in bufr_params:
             
             if bufr_param.bufr_param_type.name == 'packable_1dim':
-                nc_att[p.bufr_param_type.name] = bufr_param.get_data()
+                nc_att[bufr_param.bufr_param_type.name] = bufr_param.get_data()
                 continue
             if bufr_param.bufr_param_type.name == 'packable_2dim':
-                nc_att[p.bufr_param_type.name] = bufr_param.get_data()
+                nc_att[bufr_param.bufr_param_type.name] = bufr_param.get_data()
                 continue
             if bufr_param.bufr_param_type.name == 'var_type':
-                nc_att[p.bufr_param_type.name] = bufr_param.get_data()
+                nc_att[bufr_param.bufr_param_type.name] = bufr_param.get_data()
                 continue
             
             # default guard

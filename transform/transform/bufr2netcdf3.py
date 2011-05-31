@@ -32,33 +32,9 @@ import traceback
 import numpy as np
 from Scientific.IO import NetCDF
 
-import bufr.metadb 
 import bufr
-
-
-class BUFR2NetCDFError(Exception):
-    """ Simple exception for handeling errors """
-    pass
-
-def _netcdf_datatype(type_name):
-    """ converts numpy datatype to NetCDF datatype 
-        
-        all floats are converted to doubles
-        all integers are converted to 4 byte int
-        all chars are converted to NetCDF byte-type
-    
-    """
-    if 'float' in type_name:
-        return 'd'
-    if 'int' in type_name:
-        return 'i'
-    if 'long' in type_name:
-        return 'i'
-    if 'string' in type_name:
-        return 'b'
-    
-    raise BUFR2NetCDFError("Cannot convert %s to NetCDF compatible type" %\
-            type_name)
+import bufr.metadb 
+from bufr.transform import BUFR2NetCDFError, netcdf_datatype
 
 def _create_global_attributes(ncf, instr):
     """ Creates global netcdf attributes and assigns values
@@ -128,22 +104,22 @@ def _create_variables(ncf, vname_map):
             # variable can be packed into a scalar
             if ncvar_params['packable_1dim'] and ncvar_params['packable_2dim']:
                 nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        _netcdf_datatype(ncvar_params['var_type']) , 
+                        netcdf_datatype(ncvar_params['var_type']) , 
                         ('scalar',))
             # variable can be packed into a scanline vector 
             elif ncvar_params['packable_1dim']:
                 nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        _netcdf_datatype(ncvar_params['var_type']) , 
+                        netcdf_datatype(ncvar_params['var_type']) , 
                         (ncvar_params['netcdf_dimension_name'] ,))
             # variable can be packed into a per scanline vector
             elif ncvar_params['packable_2dim']:
                 nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        _netcdf_datatype(ncvar_params['var_type']) , 
+                        netcdf_datatype(ncvar_params['var_type']) , 
                         ('record',))
             # variable can't be packed
             else:
                 nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        _netcdf_datatype(ncvar_params['var_type']) , 
+                        netcdf_datatype(ncvar_params['var_type']) , 
                         ('record', ncvar_params['netcdf_dimension_name'] ))
 
             setattr(nc_vars[key], 'unit', ncvar_params['netcdf_unit'] )
@@ -204,7 +180,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
 
             elif packable_1dim:
                 if not scalars_handled:
-                    data = np.array(record.data.tolist(), var_type) 
+                    data = np.array(record.data, var_type) 
                     nc_var[:] = data
                 return
 
@@ -248,7 +224,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
 
 
 
-def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
+def bufr2netcdf3(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """
     
     # Create file object and connect to database
@@ -329,8 +305,6 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
                 continue
            
             _insert_record(vname_map, nc_var, record, scalars_handled, count)
-        if count > 10:
-            break
 
         # we have inserted the first bufr section and hence all variables that
         # can be packed into scalars or per scan vectors should be accounted for
