@@ -185,7 +185,8 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
                     try:
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
-                        logging.exception("Unable to convert value for %s in %s" %\
+                        logging.exception("Unable to convert "+\
+                                "value for %s in %s" %\
                                 ( data, vname_map[record.index]['netcdf_name']))
                         nc_var[ 0 ] = vname_map[record.index]\
                                 ['netcdf__FillValue']
@@ -194,7 +195,20 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
 
             elif packable_1dim:
                 if not scalars_handled:
-                    nc_var[:] = record.data.astype(var_type)
+                    size = vname_map[ record.index ]\
+                            [ 'netcdf_dimension_length' ]
+                    data = record.data
+                    
+                    if data.shape[ 0 ] < size:
+                        fillvalue = vname_map[ record.index ]\
+                                [ 'netcdf__FillValue' ]
+                        data = bufr.pad_record(data, size, fillvalue)
+                    elif data.shape[0] > size:
+                        raise BUFR2NetCDFError("Size mismatch netcdf "+\
+                                "variable expected size is"+\
+                                " %d, data size is %d" % (size, 
+                                    data.shape[0]) )
+                    nc_var[:] = data
                 return
 
             elif packable_2dim:
@@ -229,7 +243,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
         nc_var[ count, : ] = data.astype(var_type)
 
     except ValueError, val_err:
-        logging.exception("Unable to insert records %s" % (var_err, ))
+        logging.exception("Unable to insert records %s" % (val_err, ))
 
 def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """
@@ -241,7 +255,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     except OSError:
         pass
     
-    rootgrp = Dataset(nc_fn,'w',format='NETCDF4')
+    rootgrp = Dataset(nc_fn, 'w', format='NETCDF4')
 
     conn = None
     if dburl is not None:
@@ -291,7 +305,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     #
 
     rootgrp.close()
-    rootgrp = Dataset(nc_fn,'a',format='NETCDF4')
+    rootgrp = Dataset(nc_fn, 'a', format='NETCDF4')
     
     bfr.reset()
     count = -1

@@ -25,7 +25,6 @@
 
 __revision__ = 0.1
 
-import os
 import sys
 import traceback
 
@@ -180,7 +179,18 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
 
             elif packable_1dim:
                 if not scalars_handled:
-                    data = np.array(record.data, var_type) 
+                    size = vname_map[ record.index ]\
+                            [ 'netcdf_dimension_length' ]
+                    data = record.data
+                    
+                    if data.shape[ 0 ] < size:
+                        fillvalue = vname_map[ record.index ]\
+                                [ 'netcdf__FillValue' ]
+                        data = bufr.pad_record(data, size, fillvalue)
+                    elif data.shape[0] > size:
+                        raise BUFR2NetCDFError("Size mismatch netcdf variable"+\
+                                " expected size is %d, data size is %d" %\
+                    (size, data.shape[0]) )
                     nc_var[:] = data
                 return
 
