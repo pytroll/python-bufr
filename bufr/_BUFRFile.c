@@ -364,7 +364,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
     }
 
 	/*********** Read in bufr messages ***********/
-    int length = blength;
+    	int length = blength;
 	int kerr = 0;
 	int * kbuff;
 	int status = 0; /*status for reading one new entry */
@@ -378,22 +378,32 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 	status = readbufr( self->inpfp, bufr_message, &length);
 
 
-	if( status == -1 ) 
+	if( status == -1 ) {
+		/*-1 is end of file*/
 		return NULL;
+	}
 	else if( status == -2 ) {
-		PyErr_SetString(_BUFRFile_BUFRFileError, "Error in file handling");
+		char error_str[40];
+		sprintf(error_str, "Error in file handling: %d", status);
+		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
 		return NULL;
 	}   
 	else if( status == -3 ) {
-		PyErr_SetString(_BUFRFile_BUFRFileError, "Too small input array");
+		char error_str[40];
+		sprintf(error_str, "Too small input array %d", status);
+		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
 		return NULL;
 	}
 	else if( status == -4 ) {
-		PyErr_SetString(_BUFRFile_BUFRFileError, "Too small input array");
+		char error_str[40];
+		sprintf(error_str, "Too small input array: %d", status);
+		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
 		return NULL;
 	}
 	else if( status < 0 ) {
-		PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR");
+		char error_str[40];
+		sprintf(error_str, "Error reading BUFR: %d", status);
+		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
 		return NULL;
 	}
 	/*    Expand bufr message calling fortran program */
@@ -463,7 +473,9 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 
 	if ( kerr )
 	{
-		PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR entry");
+		char error_str[40];
+		sprintf(error_str, "Error reading BUFR entry: %d", kerr);
+		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
 		return NULL;
 	}
 
@@ -592,6 +604,11 @@ static PyObject * BUFRFile_next(_BUFRFile_BUFRFileObject *self) {
 	PyObject * res; 
     do {
         res = BUFRFile_read(self);
+
+        /*Pas internal errors on to caller*/
+        if(PyErr_Occurred())
+            return NULL;
+
         if (!res) {
             PyErr_SetString(PyExc_StopIteration, "BUFRFile not open");
             return NULL;
