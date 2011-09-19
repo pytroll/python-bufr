@@ -556,7 +556,6 @@ class BUFRDescDBConn(SQLXMLMarshall):
     # insert methods
     #
 
-
     def insert_bufr_keys(self, name, fglob, entries, index ):
         """ Inserts and entire list of BUFR file info entries into the database
         """
@@ -624,15 +623,15 @@ class BUFRDescDBConn(SQLXMLMarshall):
             self._session.add(param5)
 
             # Add entry type, long , int, float, ...    
-            param6 = BUFRParam(var_type, str(entry.type), bvar) 
+            param6 = BUFRParam(var_type, str(entry.var_type), bvar) 
             self._session.add(param6)
 
             # Add Fill value
-            if 'int' in str(entry.type) or 'long' in str(entry.type) :
+            if 'int' in str(entry.var_type) or 'long' in str(entry.var_type) :
                 param7 = BUFRParam(netcdf__FillValue, 
                         entry.fillvalue_int, bvar) 
                 self._session.add(param7)
-            elif 'float' in str(entry.type):
+            elif 'float' in str(entry.var_type):
                 param8 = BUFRParam(netcdf__FillValue, 
                         entry.fillvalue_float, bvar) 
                 self._session.add(param8)
