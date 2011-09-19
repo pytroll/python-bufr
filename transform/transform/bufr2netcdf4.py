@@ -103,7 +103,12 @@ def _create_variables(rootgrp, vname_map):
             ncvar_name = ncvar_params['netcdf_name']
         except KeyError:
             continue
-      
+
+        # Guard ... dimension names cannot also be used at variable names
+        if ncvar_name in rootgrp.dimensions:
+            raise ValueError("Variable name %s also used as dimension name" %\
+                    ncvar_name)
+
         try:
             var_type = ncvar_params['var_type']
             if var_type not in ['int', 'float', 'str', 
@@ -111,7 +116,7 @@ def _create_variables(rootgrp, vname_map):
                 raise BUFR2NetCDFError("Not a valid type %s" % var_type )
         except KeyError:
             raise BUFR2NetCDFError("Not a valid type %s" % var_type )
-
+        #FIXME VARIABLE DIM CONFLICT
         try:
             fillvalue = ncvar_params['netcdf__FillValue']
         except KeyError:
@@ -159,7 +164,28 @@ def _create_variables(rootgrp, vname_map):
 
 
 def _insert_record(vname_map, nc_var, record, scalars_handled, count):
-    """ Insert record in netcdf variables
+    """ Inserts data into a netcdf variable
+
+        Parameters:
+            vname_map : dict
+                A dict extracted from the database containing metadata on this
+                particular variable.
+
+            nc_var : NetCDFVariable
+                The NetCDF variable object.
+                
+            record : BUFRRecordEntry
+                The BUFR data from the bufr reader.
+
+            scalars_handled : bool
+                Defines whether variables that should be considdered as
+                constants / scalars are handled
+
+            count : int
+                Defines in which entry in the NetCDF running variable this
+                data should be inserted. This should be a continously
+                increasing variable.
+                
     """
 
     try:
@@ -179,6 +205,11 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
             var_type = 'int32'
 
         try:
+            #
+            # Handle cases where the data can be packed into a single value or
+            # a single row or single column
+
+            # Data packs to a single value
             if packable_2dim and packable_1dim:
                 if not scalars_handled:
                     data = bufr.pack_record(record)
@@ -192,7 +223,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
                                 ['netcdf__FillValue']
                         
                 return
-
+            # Data packs to a single row
             elif packable_1dim:
                 if not scalars_handled:
                     size = vname_map[ record.index ]\
@@ -210,7 +241,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
                                     data.shape[0]) )
                     nc_var[:] = data
                 return
-
+            # Data packes to a single column
             elif packable_2dim:
                 data = bufr.pack_record(record)
                 try:
@@ -239,7 +270,6 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
             raise BUFR2NetCDFError("Size mismatch netcdf "+\
                     "variable expected size is %d, data size is %d" %\
                     (size, data.shape[0]) )
-
         nc_var[ count, : ] = data.astype(var_type)
 
     except ValueError, val_err:
@@ -308,15 +338,23 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     rootgrp = Dataset(nc_fn, 'a', format='NETCDF4')
     
     bfr.reset()
-    count = -1
     scalars_handled = False
-    for section in bfr:
-        count = count + 1 
-        # manage record boundaries... 
+
+    # This variable determines which record number in the netcdf variables the
+    # data should be stored 
+    nc_count = 0
+   
+    # Loop though all sections and dump to netcdf
+    #
+    for count, section in enumerate(bfr):
+
+        # manage record boundaries. In some cases BUFR sections differ within a
+        # file . This enables the user to only convert similar sections
         if count < bstart: 
             continue
         if bend is not -1 and count > bend-1:
             break
+
         for record in section:
             # only try to convert variables that define the netcdf_name
             # parameter
@@ -326,10 +364,13 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             except KeyError:
                 continue
             
-            _insert_record(vname_map, nc_var, record, scalars_handled, count)
+            _insert_record(vname_map, nc_var, record, scalars_handled, nc_count)
+
+        nc_count += 1
 
         # we have inserted the first bufr section and hence all variables that
         # can be packed into scalars or per scan vectors should be accounted for
         scalars_handled = True 
 
     rootgrp.close()
+    #bfr.close()
