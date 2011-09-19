@@ -30,12 +30,12 @@
 #define DFILL 1.7e38
 
 // Number of values and elements in the BUFR file. 
-#define KVALS 360000
-#define KELEM 40000
+#define KVALS 4096000
+#define KELEM 160000
 
 
 static int my_ref = 0;
-int blength = 512000;
+int blength = KVALS*9;
 
 /* Extern fortran call*/
 extern int readbufr(FILE *, char *, int *); 
