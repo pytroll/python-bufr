@@ -110,7 +110,9 @@ if output_csv:
     instr = conn.get_instrument(instr_name)
     bvar = instr.bufr_var[0]
     param_type_names = [pt for pt in conn.get_variable_datatypes(instr, bvar)\
-            if pt.startswith('netcdf') or pt == 'var_type' or \
+            if pt.startswith('netcdf') or \
+            pt == 'var_type' or \
+            pt == 'bufr_replication' or \
             pt ==  "packable_1dim" or \
             pt ==  "packable_2dim" ]
     param_value_writer = csv.writer(open(output_csv,'wb'))
@@ -128,6 +130,7 @@ if output_csv:
                     [param.get_data() for param in bvar.bufr_param if \
                             param.bufr_param_type.name.startswith('netcdf') or\
                             param.bufr_param_type.name == 'var_type' or\
+                            param.bufr_param_type.name == 'bufr_replication' or\
                             param.bufr_param_type.name == 'packable_1dim' or\
                             param.bufr_param_type.name == 'packable_2dim'] )
     sys.exit(0)

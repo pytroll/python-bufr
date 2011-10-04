@@ -31,6 +31,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, backref, sessionmaker
 from sqlalchemy.orm.exc import *
 from sqlalchemy_marshall import *
+import numpy as np
 
 import bufr
 
@@ -125,15 +126,29 @@ class BUFRDataType(Base):
 
     def get_dtype(self):
         """ returns python type """
-        if self.ptype == 'float': 
+        return self.cast_dtype(self.ptype)
+   
+    @classmethod 
+    def cast_dtype(cls, dtype):
+        """ Casts data type to python data type """
+        if dtype == 'float': 
             return type(0.0)
-        if self.ptype == 'int' : 
+        if dtype == 'int' : 
             return type(0)
-        if self.ptype == 'str' : 
+        if dtype == 'str' : 
             return type('')
-        if self.ptype == 'bool': 
+        if dtype == 'bool': 
             return type(True)
         return None
+
+    @classmethod
+    def cast_data(cls, data, dtype):
+        """ Method for casting data from the database into python types. Useful
+        for gettting data in custom queries """
+        ptype = cls.cast_dtype(dtype)
+        if 'bool' in dtype:
+            data = int(data)
+        return ptype(data)
 	
 class BUFRParamType(Base):
     """ Defines parameter types, table: 'bufr_param_type'. These entries
@@ -193,16 +208,12 @@ class BUFRParam(Base):
                 self.bufr_var_id, 
                 self.bufr_param_type_id, 
                 self.bparam_data )
-    
+ 
     def get_data(self):
-        """ returns the parameter data with the correct python type """
-        dtype = self.bufr_param_type.bufr_data_type.get_dtype()
-        data = self.bparam_data
-        if 'bool' in self.bufr_param_type.bufr_data_type.ptype:
-            data = int(data)
-        return dtype(data)
-
-
+        """ returns the parameter data with the correct python type.
+        """
+        return BUFRDataType.cast_data(self.bparam_data,
+                self.bufr_param_type.bufr_data_type.ptype )
 
 #
 # Namespace factory 
@@ -261,7 +272,10 @@ class BUFRDescDBConn(SQLXMLMarshall):
             self._session.add( BUFRParamType(str_type, "var_type") )
             self._session.add( BUFRParamType(float_type, "bufr_fill_float") )
             self._session.add( BUFRParamType(int_type, "bufr_fill_int") )
-            
+
+            # Setup replication parameter
+            self._session.add( BUFRParamType(int_type, "bufr_replication", "Integer defining the overall replication factor for this variable.") )
+
             # Default netcdf parameters  
             self._session.add( BUFRParamType(str_type, "netcdf_name") )
             self._session.add( BUFRParamType(str_type, "netcdf_unit") )
@@ -431,9 +445,87 @@ class BUFRDescDBConn(SQLXMLMarshall):
     # More specific get methods for easy access
     #
 
+    def get_replication_indicies(self, instr_name):
+        """ returns a mapping between variable indicies that should be grouped
+        into a single netcdf varaible. This is necessary if replicate factors
+        are used within each bufr subsection """
+
+        result_set = self._engine.execute("select seq, data \
+                from param_values\
+                where desc = '%s' and param = '%s'" % (instr_name, "bufr_replication")).fetchall()
+
+        N = int(self._engine.execute("select count(*) from bufr_var inner join \
+                bufr_desc where bufr_desc.name = '%s'" % instr_name).fetchall()[0][0])
+        
+        # arrange indicies so that the overall replication is handled.
+        link_table = {}
+
+        # by default everything links to it self
+        for i in np.arange(N):
+            link_table[i] = i
+
+        # now overwrite with other references if there are any
+        for seq, data in result_set:
+            if data == '':
+                continue
+            for linked_index in np.arange(int(seq),N,int(data)):
+                link_table[linked_index] = int(seq)
+       
+        return link_table
+
+    def get_netcdf_parameters_dict(self, instr_name):
+        """ Returns a dict containing all parameters for translation of all
+        bufr variables. Hopefully this will be more efficient than asking for
+        each individual bufr variable.
+        
+        """
+
+        # Make a manual selection statement to avoid the sql alchemy lazy statements
+        result_set = self._engine.execute("select seq, param, data, datatype \
+                from param_values\
+                where desc = '%s'" % instr_name).fetchall()
+
+        nc_att = {}
+        for seq, name, data, dtype in result_set:
+            if name == 'netcdf_name':
+                nc_att[seq] = {}
+
+        for seq, name, data, dtype in result_set:
+            try:
+                # only continue if netcdf_name is defined for this variable.
+                # See loop above
+
+                attrs = nc_att[seq]
+
+                if name == 'packable_1dim':
+                    attrs[name] = BUFRDataType.cast_data(data, dtype)
+                    continue
+                elif name == 'packable_2dim':
+                    attrs[name] = BUFRDataType.cast_data(data, dtype)
+                    continue
+                elif name == 'var_type':
+                    attrs[name] = BUFRDataType.cast_data(data, dtype)
+                    continue
+
+                # Below default guard, removes anything not beginning with
+                # netcdf_
+                elif not name.startswith('netcdf_'): 
+                    continue
+                
+                attrs[name] = BUFRDataType.cast_data(data, dtype)
+
+            except KeyError:
+                pass
+
+        return nc_att
+
+
     def get_netcdf_parameters(self, instr_name, bufr_var_seq ):
         """ Returns a list of netcdf values corresponding to a bufr variable
-        name 
+        name.
+
+        Notice this seems to be too slow !!! If possible use the method above
+
         """
         bufr_params = self._session.query(BUFRParam).\
                 join(BUFRVar).join(BUFRDesc).join(BUFRParamType).\
