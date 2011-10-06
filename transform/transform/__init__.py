@@ -44,7 +44,7 @@ def bufr2netcdf(input_bufr_file, output_nc_file, netcdf='netcdf4',
     if netcdf == 'netcdf4':
         from bufr.transform import bufr2netcdf4
         bufr2netcdf4.bufr2netcdf(instr, input_bufr_file, output_nc_file, database_url) 
-    elif netcdf == 'netcd3':
+    elif netcdf == 'netcdf3':
         from bufr.transform import bufr2netcdf3
         bufr2netcdf3.bufr2netcdf(instr, input_bufr_file, output_nc_file, database_url) 
     else:

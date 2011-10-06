@@ -25,17 +25,22 @@
 
 __revision__ = 0.1
 
+import os
 import sys
-import traceback
+import logging
 
 import numpy as np
-from Scientific.IO import NetCDF
+from netCDF4 import Dataset
 
 import bufr
-import bufr.metadb 
+import bufr.metadb as bufrmetadb 
 from bufr.transform import BUFR2NetCDFError, netcdf_datatype
 
-def _create_global_attributes(ncf, instr):
+# Log everything, and send it to stderr.
+logging.basicConfig(level=logging.DEBUG)
+
+
+def _create_global_attributes(rootgrp, instr):
     """ Creates global netcdf attributes and assigns values
     
         Params : 
@@ -44,28 +49,28 @@ def _create_global_attributes(ncf, instr):
 
     """
     
-    setattr(ncf, 'Conventions', "CF-1.0")
-    setattr(ncf, 'title', instr.title.encode('latin-1'))
-    setattr(ncf, 'institution', instr.institution.encode('latin-1'))
-    setattr(ncf, 'source', instr.source.encode('latin-1'))
-    setattr(ncf, 'history', instr.history.encode('latin-1'))
-    setattr(ncf, 'references', instr.references.encode('latin-1'))
-    setattr(ncf, 'comments', instr.comments.encode('latin-1'))
+    rootgrp.Conventions = "CF-1.0"
+    rootgrp.title = instr.title.encode('latin-1')
+    rootgrp.institution = instr.institution.encode('latin-1')
+    rootgrp.source = instr.source.encode('latin-1')
+    rootgrp.history = instr.history.encode('latin-1')
+    rootgrp.references = instr.references.encode('latin-1')
+    rootgrp.comments = instr.comments.encode('latin-1')
 
 
-def _create_dimensions(ncf, vname_map):
+def _create_dimensions(rootgrp, vname_map):
     """ Create dimensions 
 
         Param : 
-            ncf : netcdf filehandle
+            rootgrp : netcdf filehandle
             vname_map : list of BUFR info objects
 
     """ 
 
     # Create basic dimensions in the NetCDF file
 
-    ncf.createDimension('record', None)
-    ncf.createDimension('scalar', 1)
+    rootgrp.createDimension('record', None)
+    rootgrp.createDimension('scalar', 1)
 
     # Create dimensions from database
     dims = {}
@@ -75,13 +80,13 @@ def _create_dimensions(ncf, vname_map):
             dims[ var_info_dict['netcdf_dimension_name'] ] = \
                     int( var_info_dict['netcdf_dimension_length'])
     for dim_key, dim_size in dims.iteritems():
-        ncf.createDimension(dim_key, dim_size)
+        rootgrp.createDimension(dim_key, dim_size)
 
-def _create_variables(ncf, vname_map):
+def _create_variables(rootgrp, vname_map):
     """ Create all variables
 
         Params : 
-            ncf : netcdf filehandle
+            rootgrp : netcdf filehandle
             vname_map : list of BUFR info objects
 
         Output : 
@@ -98,65 +103,101 @@ def _create_variables(ncf, vname_map):
             ncvar_name = ncvar_params['netcdf_name']
         except KeyError:
             continue
-        
+
+        # Guard ... dimension names cannot also be used at variable names
+        if ncvar_name in rootgrp.dimensions:
+            raise ValueError("Variable name %s also used as dimension name" %\
+                    ncvar_name)
+
         try:
-            # variable can be packed into a scalar
-            if ncvar_params['packable_1dim'] and ncvar_params['packable_2dim']:
-                nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        netcdf_datatype(ncvar_params['var_type']) , 
-                        ('scalar',))
-            # variable can be packed into a scanline vector 
-            elif ncvar_params['packable_1dim']:
-                nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        netcdf_datatype(ncvar_params['var_type']) , 
-                        (ncvar_params['netcdf_dimension_name'] ,))
-            # variable can be packed into a per scanline vector
-            elif ncvar_params['packable_2dim']:
-                nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        netcdf_datatype(ncvar_params['var_type']) , 
-                        ('record',))
-            # variable can't be packed
-            else:
-                nc_vars[key] = ncf.createVariable( ncvar_name, 
-                        netcdf_datatype(ncvar_params['var_type']) , 
-                        ('record', ncvar_params['netcdf_dimension_name'] ))
-
-            setattr(nc_vars[key], 'unit', ncvar_params['netcdf_unit'] )
-
             var_type = ncvar_params['var_type']
             if var_type not in ['int', 'float', 'str', 
                     'double', 'long']:
-                print "no valid type defined"
-                return
-
+                raise BUFR2NetCDFError("Not a valid type %s" % var_type )
+        except KeyError:
+            raise BUFR2NetCDFError("Not a valid type %s" % var_type )
+        #FIXME VARIABLE DIM CONFLICT
+        try:
             fillvalue = ncvar_params['netcdf__FillValue']
-            setattr(nc_vars[key], '_FillValue', eval(var_type)(fillvalue))
+        except KeyError:
+            fillvalue = None
+
+        try:
+            # variable can be packed into a scalar
+            if ncvar_params['packable_1dim'] and ncvar_params['packable_2dim']:
+                nc_vars[key] = rootgrp.createVariable( ncvar_name, 
+                        netcdf_datatype(ncvar_params['var_type']) , 
+                        ('scalar',), fill_value=eval(var_type)(fillvalue), 
+                        zlib=False,least_significant_digit=3 )
+            # variable can be packed into a scanline vector 
+            elif ncvar_params['packable_1dim']:
+                nc_vars[key] = rootgrp.createVariable( ncvar_name, 
+                        netcdf_datatype(ncvar_params['var_type']) , 
+                        (ncvar_params['netcdf_dimension_name'] ,), 
+                        fill_value=eval(var_type)(fillvalue), 
+                        zlib=False,least_significant_digit=3 )
+            # variable can be packed into a per scanline vector
+            elif ncvar_params['packable_2dim']:
+                nc_vars[key] = rootgrp.createVariable( ncvar_name, 
+                        netcdf_datatype(ncvar_params['var_type']) , 
+                        ('record',), fill_value=eval(var_type)(fillvalue), 
+                        zlib=False,least_significant_digit=3 )
+            # variable can't be packed
+            else:
+                nc_vars[key] = rootgrp.createVariable( ncvar_name, 
+                        netcdf_datatype(ncvar_params['var_type']) , 
+                        ('record', ncvar_params['netcdf_dimension_name'] ), 
+                        fill_value=eval(var_type)(fillvalue), 
+                        zlib=False,least_significant_digit=3 )
+
+            setattr(nc_vars[key], 'unit', ncvar_params['netcdf_unit'] )
 
             if 'netcdf_long_name' in ncvar_params:
                 setattr(nc_vars[key], 'long_name', 
                         ncvar_params['netcdf_long_name'])
 
         except KeyError, key_exception:
-            traceback.print_exc(file=sys.stdout)
-            print key_exception
+            logging.exception("Unable to find netcdf conversion, parameters")
+
 
     return nc_vars
 
 
-def _insert_record(vname_map, nc_var, record, scalars_handled, count):
-    """ Insert record in netcdf variables
+def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_index):
+    """ Inserts data into a netcdf variable
+
+        Parameters:
+            vname_map : dict
+                A dict extracted from the database containing metadata on this
+                particular variable.
+
+            nc_var : NetCDFVariable
+                The NetCDF variable object.
+                
+            record : BUFRRecordEntry
+                The BUFR data from the bufr reader.
+
+            scalars_handled : bool
+                Defines whether variables that should be considdered as
+                constants / scalars are handled
+
+            count : int
+                Defines in which entry in the NetCDF running variable this
+                data should be inserted. This should be a continously
+                increasing variable.
+                
     """
 
     try:
         
         # pack data  if possible
-        packable_1dim = int(vname_map[record.index]['packable_1dim'])
-        packable_2dim = int(vname_map[record.index]['packable_2dim'])
+        packable_1dim = int(vname_map[linked_index]['packable_1dim'])
+        packable_2dim = int(vname_map[linked_index]['packable_2dim'])
 
-        var_type = vname_map[record.index]['var_type']
+        var_type = vname_map[linked_index]['var_type']
         if var_type not in ['int', 'float', 'str', 
                 'double', 'long']:
-            print "no valid type defined"
+            logging.error("No valid type defined")
             return
        
         # Handle 32/64 numpy conversion
@@ -164,111 +205,123 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count):
             var_type = 'int32'
 
         try:
+            #
+            # Handle cases where the data can be packed into a single value or
+            # a single row or single column
+
+            # Data packs to a single value
             if packable_2dim and packable_1dim:
                 if not scalars_handled:
                     data = bufr.pack_record(record)
                     try:
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
-                        traceback.print_exc(file=sys.stdout)
-                        print data
-                        print nc_var
-                        nc_var[ 0 ] = vname_map[record.index]\
+                        logging.exception("Unable to convert "+\
+                                "value for %s in %s" %\
+                                ( data, vname_map[linked_index]['netcdf_name']))
+                        nc_var[ 0 ] = vname_map[linked_index]\
                                 ['netcdf__FillValue']
+                        
                 return
-
+            # Data packs to a single row
             elif packable_1dim:
                 if not scalars_handled:
-                    size = vname_map[ record.index ]\
+                    size = vname_map[ linked_index ]\
                             [ 'netcdf_dimension_length' ]
                     data = record.data
                     
                     if data.shape[ 0 ] < size:
-                        fillvalue = vname_map[ record.index ]\
+                        fillvalue = vname_map[ linked_index ]\
                                 [ 'netcdf__FillValue' ]
                         data = bufr.pad_record(data, size, fillvalue)
                     elif data.shape[0] > size:
-                        raise BUFR2NetCDFError("Size mismatch netcdf variable"+\
-                                " expected size is %d, data size is %d" %\
-                    (size, data.shape[0]) )
+                        raise BUFR2NetCDFError("Size mismatch netcdf "+\
+                                "variable expected size is"+\
+                                " %d, data size is %d" % (size, 
+                                    data.shape[0]) )
                     nc_var[:] = data
                 return
-
+            # Data packes to a single column
             elif packable_2dim:
                 data = bufr.pack_record(record)
                 try:
                     nc_var[ count ] = eval(var_type)(data)
                 except OverflowError, overflow_error:
-                    traceback.print_exc(file=sys.stdout)
-                    print data
-                    print nc_var
-                    nc_var[ count ] = vname_map[record.index]\
+                    logging.exception("Unable to convert value for %s in %s" %\
+                            ( data, vname_map[linked_index]['netcdf_name']))
+                    nc_var[ count ] = vname_map[linked_index]\
                             ['netcdf__FillValue']
                 return
 
         except bufr.RecordPackError, pack_error:
-            traceback.print_exc(file=sys.stdout)
-            print pack_error
+            logging.exception("Unable to pack data for %s" %\
+                    ( vname_map[linked_index]['netcdf_name'], ))
+
         
         
         # Handle data with varying lengths, padd data to fit size
-        size = vname_map[ record.index ][ 'netcdf_dimension_length' ]
+        size = vname_map[ linked_index ][ 'netcdf_dimension_length' ]
         data = record.data
         
         if data.shape[ 0 ] < size:
-            fillvalue = vname_map[ record.index ][ 'netcdf__FillValue' ]
+            fillvalue = vname_map[ linked_index ][ 'netcdf__FillValue' ]
             data = bufr.pad_record(data, size, fillvalue)
         elif data.shape[0] > size:
             raise BUFR2NetCDFError("Size mismatch netcdf "+\
                     "variable expected size is %d, data size is %d" %\
                     (size, data.shape[0]) )
         
-        #convert to netcdf variable type
-        data = np.array(data.tolist(), dtype=np.dtype(var_type))
-
         nc_var[ count, : ] = data.astype(var_type)
 
     except ValueError, val_err:
-        traceback.print_exc(file=sys.stdout)
-        print val_err
+        logging.exception("Unable to insert records %s" % (val_err, ))
 
-
-
-def bufr2netcdf3(instr_name, bufr_fn, nc_fn, dburl=None):
+def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """
     
     # Create file object and connect to database
-    ncf = NetCDF.NetCDFFile(nc_fn,'w')
     bfr = bufr.BUFRFile(bufr_fn)
+    try:
+        os.remove(nc_fn)
+    except OSError:
+        pass
+    
+    rootgrp = Dataset(nc_fn, 'w', format='NETCDF3_CLASSIC')
 
     conn = None
     if dburl is not None:
-        conn = bufr.metadb.BUFRDescDBConn(dburl)
+        conn = bufrmetadb.BUFRDescDBConn(dburl)
     else:
-        conn = bufr.metadb.BUFRDescDBConn()
+        conn = bufrmetadb.BUFRDescDBConn()
 
     instr = conn.get_instrument(instr_name)
 
     #Get bufr record sections from database
     bstart = instr.bufr_record_start
     bend = instr.bufr_record_end
-    
-    bfr.reset()
 
     # Read BUFR file keys and get corresponding NetCDF names from 
     # from the database. Fast forward to record start. 
     for i in range(bstart+1):
         records = bfr.read()
-    bfr_keys = [r.index for r in records]
-    vname_map = {}
-    for k in bfr_keys:
-        vname_map[k] = conn.get_netcdf_parameters(instr_name, k)
+
+    # Set up accounting for each variable , to be used when wriing variables to
+    # netcdf.
+    bfr_count = []
+    for r in records:
+        bfr_count.append(0)
+
+    vname_map = conn.get_netcdf_parameters_dict(instr_name)
+    
+    # get replication indicies, the indicies handle multiple records of the
+    # same variable within a bufr subsection.
+    replication_indicies = conn.get_replication_indicies(instr_name)
     
     # Create attributes 
-    _create_global_attributes(ncf, instr)
+    _create_global_attributes(rootgrp, instr)
 
     # Create dimensions
-    _create_dimensions(ncf, vname_map)
+    _create_dimensions(rootgrp, vname_map)
 
     #
     # Get list of variables which should be treated as constants and
@@ -279,45 +332,62 @@ def bufr2netcdf3(instr_name, bufr_fn, nc_fn, dburl=None):
     global_var_attrs = conn.get_netcdf_global_attrs(instr_name)
     for record in records:
         if record.name in global_var_attrs:
-            print "attri %s" % record.name
-            setattr(ncf, global_var_attrs[record.name], "%s" % \
+            setattr(rootgrp, global_var_attrs[record.name], "%s" % \
                     record.data)
 
     # create variables
-    _create_variables(ncf, vname_map)
+    _create_variables(rootgrp, vname_map)
 
-    # close file and reopen in append mode
-    ncf.close()
-    ncf = NetCDF.NetCDFFile(nc_fn,'a')
 
     #
     # Insert data into variables
     #
-  
-    bfr.reset()
-    bfr.next()
-    count = -1
+
+    rootgrp.close()
+    rootgrp = Dataset(nc_fn, 'a', format='NETCDF3_CLASSIC')
+    
+    ##bfr.reset()
+    del bfr
+    bfr = bufr.BUFRFile(bufr_fn)
     scalars_handled = False
-    for section in bfr:
-        count = count + 1 
-        ##ncf.sync()
-        # manage record boundaries... 
+
+   
+    # Loop though all sections and dump to netcdf
+    #
+    for count, section in enumerate(bfr):
+
+        # manage record boundaries. In some cases BUFR sections differ within a
+        # file . This enables the user to only convert similar sections
         if count < bstart: 
             continue
         if bend is not -1 and count > bend-1:
             break
+
         for record in section:
+           
+            # linked index handles BUFR replication factors with multiple data
+            # entries in one subsection.
+            linked_index = replication_indicies[record.index] 
+
             # only try to convert variables that define the netcdf_name
             # parameter
             try:
-                nc_var = ncf.variables[vname_map[record.index]['netcdf_name']]
+                nc_var = rootgrp.variables[vname_map[linked_index]\
+                        ['netcdf_name']]
             except KeyError:
                 continue
+            
+            _insert_record(vname_map, nc_var, record, scalars_handled, bfr_count[linked_index], linked_index)
            
-            _insert_record(vname_map, nc_var, record, scalars_handled, count)
+            # This variable determines which record number in the netcdf variables the
+            # data should be stored 
+            bfr_count[linked_index] += 1
+        print ",".join([str(i) for i in bfr_count[0:40]])
+
 
         # we have inserted the first bufr section and hence all variables that
         # can be packed into scalars or per scan vectors should be accounted for
         scalars_handled = True 
 
-    ncf.close()
+    rootgrp.close()
+    del bfr

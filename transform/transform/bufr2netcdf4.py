@@ -346,7 +346,9 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     rootgrp.close()
     rootgrp = Dataset(nc_fn, 'a', format='NETCDF4')
     
-    bfr.reset()
+    ##bfr.reset()
+    del bfr
+    bfr = bufr.BUFRFile(bufr_fn)
     scalars_handled = False
 
    
@@ -388,4 +390,4 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
         scalars_handled = True 
 
     rootgrp.close()
-    #bfr.close()
+    del bfr
