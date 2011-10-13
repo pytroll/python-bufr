@@ -472,6 +472,24 @@ class BUFRDescDBConn(SQLXMLMarshall):
                 link_table[linked_index] = int(seq)
        
         return link_table
+    
+    def get_replication_counts(self, instr_name):
+        """ returns a mapping between variable indicies that should be grouped
+        into a single netcdf varaible. This is necessary if replicate factors
+        are used within each bufr subsection """
+
+        result_set = self._engine.execute("select seq, data \
+                from param_values\
+                where desc = '%s' and param = '%s'" % (instr_name, "bufr_replication")).fetchall()
+
+        replication_counts = {}
+        # now overwrite with other references if there are any
+        for seq, data in result_set:
+            if data == '':
+                continue
+            replication_counts[int(seq)] = int(data)
+       
+        return replication_counts
 
     def get_netcdf_parameters_dict(self, instr_name):
         """ Returns a dict containing all parameters for translation of all
@@ -504,6 +522,9 @@ class BUFRDescDBConn(SQLXMLMarshall):
                     attrs[name] = BUFRDataType.cast_data(data, dtype)
                     continue
                 elif name == 'var_type':
+                    attrs[name] = BUFRDataType.cast_data(data, dtype)
+                    continue
+                elif name == 'bufr_replication':
                     attrs[name] = BUFRDataType.cast_data(data, dtype)
                     continue
 
