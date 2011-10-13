@@ -79,6 +79,13 @@ def _create_dimensions(rootgrp, vname_map):
         if 'netcdf_name' in var_info_dict:
             dims[ var_info_dict['netcdf_dimension_name'] ] = \
                     int( var_info_dict['netcdf_dimension_length'])
+        if 'bufr_replication' in var_info_dict:
+            try:
+                repl = int( var_info_dict['netcdf_dimension_length'])
+                dims[ "record_repl_%d" % repl ]  = None
+            except TypeError:
+                pass
+
     for dim_key, dim_size in dims.iteritems():
         rootgrp.createDimension(dim_key, dim_size)
 
@@ -317,6 +324,16 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     # same variable within a bufr subsection.
     replication_indicies = conn.get_replication_indicies(instr_name)
     
+    # If we have different replication factors for the different variables we
+    # end up getting af segfault from the NetCDF library because we try to map
+    # the same unlimited dimension to two different lenghts. To circumvent that
+    # we duplicated the variables with no replication factor the same number of
+    # times as the variables that does need the replication. In this way we
+    # don't get different lenghts for the unlimited netcdf dimension.
+
+    replication_counts = conn.get_replication_counts(instr_name)
+
+
     # Create attributes 
     _create_global_attributes(rootgrp, instr)
 
@@ -340,7 +357,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
 
 
     #
-    # Insert data into variables
+    # This section inserts data into the NetCDF variables
     #
 
     rootgrp.close()
@@ -351,7 +368,6 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     bfr = bufr.BUFRFile(bufr_fn)
     scalars_handled = False
 
-   
     # Loop though all sections and dump to netcdf
     #
     for count, section in enumerate(bfr):
