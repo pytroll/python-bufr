@@ -106,19 +106,19 @@ typedef struct {
 	 * Python object for holding data for each bufr element (scanline)
 	 */
 	PyObject_HEAD
+	PyObject * index;  /* variable index */
 	PyObject* name;     /* name */
 	PyObject* unit;     /* unit */
 	PyObject * data;  /* data array */
-	PyObject * index;  /* data array */
 
 
 } _BUFRFile_BUFRFileEntryObject;
 
 static PyMemberDef BUFRFileEntry_Members[] = {
+    {"index", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, index), 0, "index"},
     {"name", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, name), 0, "name"},
     {"unit", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, unit), 0, "unit"},
     {"data", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, data), 0, "data"},
-    {"index", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, index), 0, "index"},
     {NULL},
     /* Sentinel */
 };
@@ -518,11 +518,21 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 
 		/* Create a New BUFRFileEntry object to hold the data */
 		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata, *index;
+        // FIXME we need to clea the error handler before continuing ...
+        PyErr_PrintEx(0);
 
 		/* unit string*/
 		unit = PyString_FromFormat("%s", myunits);
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
+            unit = PyString_FromFormat("%s","unknown");
+	    }
 		/* name string */
 		name = PyString_FromFormat("%s", mycname);
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
+		    name = PyString_FromFormat("%s", "unknown");
+	    }
         index = PyInt_FromLong(s);
 
 		/* subsets differ by kelem = number of elements. Notice
