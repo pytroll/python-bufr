@@ -518,21 +518,25 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 
 		/* Create a New BUFRFileEntry object to hold the data */
 		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata, *index;
+
         // FIXME we need to clea the error handler before continuing ...
         PyErr_PrintEx(0);
+
+        /*If we can't parse unit or name we ignore this entry*/
 
 		/* unit string*/
 		unit = PyString_FromFormat("%s", myunits);
         if (PyErr_Occurred()) {
             PyErr_Clear();
-            unit = PyString_FromFormat("%s","unknown");
+            continue;
 	    }
 		/* name string */
 		name = PyString_FromFormat("%s", mycname);
         if (PyErr_Occurred()) {
             PyErr_Clear();
-		    name = PyString_FromFormat("%s", "unknown");
+		    continue;
 	    }
+
         index = PyInt_FromLong(s);
 
 		/* subsets differ by kelem = number of elements. Notice
