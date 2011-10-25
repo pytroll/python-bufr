@@ -59,10 +59,13 @@ class BUFRDesc(Base):
     comments = Column(String)
     bufr_record_start = Column(Integer)
     bufr_record_end = Column(Integer)
+    platform_regex = Column(String)
+    transposed = Column(Boolean)
 
     _xml_vars =  ('id', 'name', 'description', 'fn_regex', 'title', 
             'institution', 'source', 'history','references', 'comments', 
-            'bufr_var', 'bufr_record_start', 'bufr_record_end')
+            'bufr_var', 'bufr_record_start', 'bufr_record_end',
+            'platform_regex', 'transposed')
     
     _alt_key = 'name'
     
@@ -470,7 +473,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
                 continue
             for linked_index in np.arange(int(seq),N,int(data)):
                 link_table[linked_index] = int(seq)
-       
+         
         return link_table
     
     def get_replication_counts(self, instr_name):
@@ -536,6 +539,8 @@ class BUFRDescDBConn(SQLXMLMarshall):
                 attrs[name] = BUFRDataType.cast_data(data, dtype)
 
             except KeyError:
+                pass
+            except ValueError:
                 pass
 
         return nc_att
