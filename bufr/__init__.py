@@ -28,6 +28,7 @@ __revision__ = 0.1
 
 from _BUFRFile import *
 import numpy as np
+from numpy import ma
 
 class RecordPackError(Exception):
     """ Raised when packing non homogenous data """
@@ -122,35 +123,36 @@ def pack_record( record ):
     try:
         N = len(record.data) # throws exception if not supported
 
-        first_elem = record.data[0]
+        fixed_elem = record.data.min()
         eps = 0
         try:
             # find machine epsilon for this type
-            eps = np.finfo(first_elem.__class__).eps 
+            eps = np.finfo(fixed_elem.__class__).eps 
         except ValueError:
             # Handle integers, eps=0
             pass
         
-        # compare all elements to the first element, maybe a bit slow since
+        # compare all elements to the fixed element, maybe a bit slow since
         # it's a while array operation
-        if True in ( record.data - first_elem > 10*eps ):
+        if (record.data.max() - fixed_elem) > 10*eps:
             # One of the numbers differ 
-            raise RecordPackError("Heteogenous data")
+            raise RecordPackError("Heteogenous data, index: %s name: %s" % (record.index, record.name))
 
         # If we reach this point we were able to pack the array into a single
         # scalar and we only need to return one variable
 
         # return int , if possible 
-        if np.floor(first_elem) - first_elem < 10*np.finfo(np.float).eps:
-            return int(first_elem)
+        if np.floor(fixed_elem) - fixed_elem < 10*np.finfo(np.float).eps:
+            return int(fixed_elem)
 
         # return standard floating point
-        return first_elem
+        return fixed_elem
 
     except TypeError, e:
         # if we didn't get an object supporting len we just return the object
         # because it must be a scalar
         raise RecordPackError("Not an array")
+
 
 
 def pack_section( section ):
