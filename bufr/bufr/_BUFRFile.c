@@ -519,8 +519,10 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 		/* Create a New BUFRFileEntry object to hold the data */
 		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata, *index;
 
-        // FIXME we need to clea the error handler before continuing ...
-        PyErr_PrintEx(0);
+        // FIXME we need to clear the error handler before continuing ...
+        if (PyErr_Occurred()) {
+            PyErr_PrintEx(0);
+        }
 
         /*If we can't parse unit or name we ignore this entry*/
 

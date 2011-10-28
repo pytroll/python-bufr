@@ -24,7 +24,7 @@ Variable descriptions of bufr file entries
 """
 
 import re
-
+import logging
 import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
@@ -34,6 +34,8 @@ from sqlalchemy_marshall import *
 import numpy as np
 
 import bufr
+
+logger = logging.getLogger('bufr_metadb')
 
 Base = declarative_base()
 
@@ -250,6 +252,9 @@ class BUFRDescDBConn(SQLXMLMarshall):
         #
 
         try:
+
+            logger.debug('Trying to create tables')
+
             self._session.add( BUFRDataType( 'int' ))
             self._session.add( BUFRDataType( 'float'))
             self._session.add( BUFRDataType( 'str'))
@@ -309,14 +314,20 @@ class BUFRDescDBConn(SQLXMLMarshall):
             # commit new parameters 
             self._session.commit()
 
+    
+            logger.debug('Done to creating tables')
+
         except IntegrityError:
     	## except Exception:
             self._session.rollback()
+            logger.debug('Tables already there')
+
 
     def save(self):
         try:
             self._session.commit()
         except:
+            logger.debug('rollback')
             self._session.rollback()
     #
     # General get methods
@@ -453,6 +464,8 @@ class BUFRDescDBConn(SQLXMLMarshall):
         into a single netcdf varaible. This is necessary if replicate factors
         are used within each bufr subsection """
 
+        logger.debug("get replication indicies")
+
         result_set = self._engine.execute("select seq, data \
                 from param_values\
                 where desc = '%s' and param = '%s'" % (instr_name, "bufr_replication")).fetchall()
@@ -553,6 +566,9 @@ class BUFRDescDBConn(SQLXMLMarshall):
         Notice this seems to be too slow !!! If possible use the method above
 
         """
+        
+        logger.debug("get netcdf parameters")
+
         bufr_params = self._session.query(BUFRParam).\
                 join(BUFRVar).join(BUFRDesc).join(BUFRParamType).\
                 filter(BUFRDesc.name == instr_name).\
@@ -677,6 +693,9 @@ class BUFRDescDBConn(SQLXMLMarshall):
     def insert_bufr_keys(self, name, fglob, entries, index ):
         """ Inserts and entire list of BUFR file info entries into the database
         """
+
+        logger.debug("Inserting bufr keys")
+
         str_type = self._session.query( BUFRDataType ).\
                 filter( BUFRDataType.ptype == 'str' ).one()
         bufr_unit = self._session.query( BUFRParamType ).\

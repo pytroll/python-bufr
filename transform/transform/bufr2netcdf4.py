@@ -37,9 +37,7 @@ import bufr.metadb as bufrmetadb
 from bufr.transform import BUFR2NetCDFError, netcdf_datatype
 
 # Log everything, and send it to stderr.
-logger = logging.getLogger('bufr2netcdf3')
-logger.setLevel(logging.DEBUG)
-
+logger = logging.getLogger('bufr2netcdf')
 
 def _create_global_attributes(rootgrp, instr):
     """ Creates global netcdf attributes and assigns values
@@ -49,7 +47,9 @@ def _create_global_attributes(rootgrp, instr):
             instr : SQLalchemy BufrDesc object
 
     """
-    
+   
+    logger.debug("Creating global attributes")
+
     rootgrp.Conventions = "CF-1.0"
     rootgrp.title = instr.title.encode('latin-1')
     rootgrp.institution = instr.institution.encode('latin-1')
@@ -67,6 +67,8 @@ def _create_dimensions(rootgrp, vname_map):
             vname_map : list of BUFR info objects
 
     """ 
+
+    logger.debug("Creating dimensions")
 
     # Create basic dimensions in the NetCDF file
 
@@ -107,6 +109,7 @@ def _create_variables(rootgrp, vname_map):
                 netcdf variable name and variable object
 
     """
+    logger.debug("Creating variables")
     nc_vars = {}
     for key, ncvar_params in vname_map.iteritems():
         
@@ -326,6 +329,10 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     bend = instr.bufr_record_end
     transpose = instr.transposed
 
+    logger.debug("start index: %s, end index: %s" % (bstart, bend) )
+    logger.debug("transposed : %s" % transpose )
+
+
     # Read BUFR file keys and get corresponding NetCDF names from 
     # from the database. Fast forward to record start. 
     for i in range(bstart+1):
@@ -364,12 +371,16 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     # create variables
     _create_variables(rootgrp, vname_map)
 
-
     #
     # This section inserts data into the NetCDF variables
     #
 
+    logger.debug("Closing netcdf handle after setup")
+
     rootgrp.close()
+    
+    logger.debug("Opening netcdf handle after setup")
+    
     rootgrp = Dataset(nc_fn, 'a', format='NETCDF4')
     
     ##bfr.reset()
@@ -391,7 +402,6 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
         
         mysection = section
         if transpose:
-            print "TRANSPOSED" 
             # allocate container for new transposed data
             transposed_section = []
 
@@ -401,7 +411,10 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             
             # Collect the record indicies we need
             indicies = []
+
+            # Structure for keeping trac of base entry and replicated entries
             index_groups = {}
+
             for rec1 in section:
                 try:
                     nc_name = vname_map[rec1.index]\
@@ -421,11 +434,17 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
                                 indicies.append(rec2.index)
                                 index_groups[rec1.index].append(rec2.index)
                             else:
+                                # Make sure that we don't have replicated
+                                # entries that links to different base entries
                                 raise BUFR2NetCDFError("Unable to transpose section, ambiguous variable naming")
 
                 except KeyError:
                     pass
 
+            # Collect similar variables into a single array consisting of
+            # stacked data rows. If the columns are order by field-of-view we
+            # need to transpose the entire array to get the data ordered by
+            # scanlines. This is the case with SSMIS data from Eumetcast
 
             for key, index_group in index_groups.iteritems():
                 old_entry = section[key]
@@ -439,10 +458,12 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
                                 old_entry.unit, 
                                 scanline[:nc_dim_length]))
 
-
             # reassign whole section to new transposed section
             mysection = transposed_section
 
+        if transpose and (len(section) != len(transposed_section)):
+            logger.debug("Different section lengths orig. %s transposed %s" %\
+                    (len(section), len(transposed_section)))
 
         for record in mysection:
          
@@ -456,8 +477,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             try:
                 linked_index = replication_indicies[record.index] 
             except KeyError, e:
-                raise BUFR2NetCDFError("Index %s not found in replication tables, var. name: %s, unit : %s , data : %s" %\
-                        (record.index, record.name, record.unit, record.data))
+                continue
 
             # only try to convert variables that define the netcdf_name
             # parameter
@@ -472,13 +492,10 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             # This variable determines which record number in the netcdf variables the
             # data should be stored 
             bfr_count[linked_index] += 1
-        print ",".join([str(i) for i in bfr_count[0:40]])
-
 
         # we have inserted the first bufr section and hence all variables that
         # can be packed into scalars or per scan vectors should be accounted for
         scalars_handled = True 
-        
         
         # We have inserted all data for this subsection. We need to level out
         # the differences in the unlimited dimension. The differenences stems
@@ -508,10 +525,5 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
                 # data should be stored 
                 bfr_count[record.index] += 1
         
-
-        print ",".join([str(i) for i in bfr_count[0:40]])
-
-
-
     rootgrp.close()
     del bfr
