@@ -438,10 +438,8 @@ class BUFRDescDBConn(SQLXMLMarshall):
     def get_param_type(self, ptype_name):
         """ Returns the parameter type for a defined parameter type and
         variable"""
-        print ptype_name
         param_type = self._session.query(BUFRParamType).\
                 filter(BUFRParamType.name == ptype_name).one()
-        print "success"
         return param_type
 
     def get_variable_param_data(self, instr_name, var_name, ptype_name):

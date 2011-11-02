@@ -1,3 +1,10 @@
+python-bufr-metadb (0.1-3) unstable; urgency=low
+
+  * Optimized database queries
+  * Added extra parameters to BUFR description table
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Wed, 02 Nov 2011 12:52:25 +0100
+
 python-bufr-metadb (0.1-2) unstable; urgency=low
 
   * Changed pybufr references to bufr

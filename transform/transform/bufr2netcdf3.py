@@ -37,7 +37,8 @@ import bufr.metadb as bufrmetadb
 from bufr.transform import BUFR2NetCDFError, netcdf_datatype
 
 # Log everything, and send it to stderr.
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('bufr2netcdf')
+logger.setLevel(logging.DEBUG)
 
 
 def _create_global_attributes(rootgrp, instr):
@@ -79,10 +80,15 @@ def _create_dimensions(rootgrp, vname_map):
         if 'netcdf_name' in var_info_dict:
             dims[ var_info_dict['netcdf_dimension_name'] ] = \
                     int( var_info_dict['netcdf_dimension_length'])
+
+        # This section handles bufr replication by adding a new unlimited
+        # dimension
         if 'bufr_replication' in var_info_dict:
             try:
-                repl = int( var_info_dict['netcdf_dimension_length'])
-                dims[ "record_repl_%d" % repl ]  = None
+                repl = int( var_info_dict['bufr_replication'])
+                repl_nc_dim_name = "record_repl_%d" % repl
+                dims[ repl_nc_dim_name ]  = None
+                var_info_dict['netcdf_dimension_name_unlim'] = repl_nc_dim_name 
             except TypeError:
                 pass
 
@@ -129,6 +135,12 @@ def _create_variables(rootgrp, vname_map):
         except KeyError:
             fillvalue = None
 
+        record = 'record'
+        try:
+            record = ncvar_params['netcdf_dimension_name_unlim']
+        except KeyError:
+            pass
+
         try:
             # variable can be packed into a scalar
             if ncvar_params['packable_1dim'] and ncvar_params['packable_2dim']:
@@ -163,8 +175,14 @@ def _create_variables(rootgrp, vname_map):
                 setattr(nc_vars[key], 'long_name', 
                         ncvar_params['netcdf_long_name'])
 
+            # append attribute to track bufr replication
+            if 'bufr_replication' in ncvar_params:
+                setattr(nc_vars[key], 'bufr_replication_factor', 
+                        ncvar_params['bufr_replication'])
+
+
         except KeyError, key_exception:
-            logging.exception("Unable to find netcdf conversion, parameters")
+            logger.exception("Unable to find netcdf conversion, parameters")
 
 
     return nc_vars
@@ -204,7 +222,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
         var_type = vname_map[linked_index]['var_type']
         if var_type not in ['int', 'float', 'str', 
                 'double', 'long']:
-            logging.error("No valid type defined")
+            logger.error("No valid type defined")
             return
        
         # Handle 32/64 numpy conversion
@@ -223,7 +241,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                     try:
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
-                        logging.exception("Unable to convert "+\
+                        logger.exception("Unable to convert "+\
                                 "value for %s in %s" %\
                                 ( data, vname_map[linked_index]['netcdf_name']))
                         nc_var[ 0 ] = vname_map[linked_index]\
@@ -254,14 +272,14 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                 try:
                     nc_var[ count ] = eval(var_type)(data)
                 except OverflowError, overflow_error:
-                    logging.exception("Unable to convert value for %s in %s" %\
+                    logger.exception("Unable to convert value for %s in %s" %\
                             ( data, vname_map[linked_index]['netcdf_name']))
                     nc_var[ count ] = vname_map[linked_index]\
                             ['netcdf__FillValue']
                 return
 
         except bufr.RecordPackError, pack_error:
-            logging.exception("Unable to pack data for %s" %\
+            logger.exception("Unable to pack data for %s" %\
                     ( vname_map[linked_index]['netcdf_name'], ))
 
         
@@ -281,7 +299,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
         nc_var[ count, : ] = data.astype(var_type)
 
     except ValueError, val_err:
-        logging.exception("Unable to insert records %s" % (val_err, ))
+        logger.exception("Unable to insert records %s" % (val_err, ))
 
 def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """
@@ -306,6 +324,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     #Get bufr record sections from database
     bstart = instr.bufr_record_start
     bend = instr.bufr_record_end
+    transpose = instr.transposed
 
     # Read BUFR file keys and get corresponding NetCDF names from 
     # from the database. Fast forward to record start. 
@@ -324,16 +343,6 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     # same variable within a bufr subsection.
     replication_indicies = conn.get_replication_indicies(instr_name)
     
-    # If we have different replication factors for the different variables we
-    # end up getting af segfault from the NetCDF library because we try to map
-    # the same unlimited dimension to two different lenghts. To circumvent that
-    # we duplicated the variables with no replication factor the same number of
-    # times as the variables that does need the replication. In this way we
-    # don't get different lenghts for the unlimited netcdf dimension.
-
-    replication_counts = conn.get_replication_counts(instr_name)
-
-
     # Create attributes 
     _create_global_attributes(rootgrp, instr)
 
@@ -368,6 +377,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     bfr = bufr.BUFRFile(bufr_fn)
     scalars_handled = False
 
+   
     # Loop though all sections and dump to netcdf
     #
     for count, section in enumerate(bfr):
@@ -378,9 +388,58 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             continue
         if bend is not -1 and count > bend-1:
             break
+        
+        mysection = section
+        if transpose:
+            
+            # allocate container for new transposed data
+            transposed_section = [None for i in range(len(section))]
 
-        for record in section:
-           
+            # FUCK ! WTE !!!! (What the EUMETSAT !!!) SSMIS BUFR from SDR
+            # records are sorted by field of view and not by scanline hence the
+            # need to collect and transpose data.
+            
+            # Collect the record indicies we need
+            handled_indicies = []
+            for rec1 in section:
+                try:
+                    nc_name = vname_map[rec1.index]\
+                            ['netcdf_name']
+                    indicies = []
+
+                    # we need to collect lines matching by bufr replication we
+                    # assume that only the original entry has a netcdf_name
+                    # assigned to it.
+                    for rec2 in section:
+                        linked_index = replication_indicies[rec2.index] 
+                        if linked_index == rec1.index:
+                            if rec2.index not in handled_indicies:
+                                indicies.append(rec2.index)
+                            else:
+                                raise BUFR2NetCDFError("Unabble to transpose section, ambiguous variable naming")
+                except KeyError:
+                    pass
+            
+                # Stack the data of all that 
+                new_data = np.vstack(tuple([section[i].data for i in indicies]))
+
+                # bad naming below 
+                for scanline, bufr_index in enumerate(indicies):
+                    old_entry = section[bufr_index]
+                    transposed_section[bufr_index] = bufr.BUFRFileEntry(old_entry.index, 
+                            old_entry.name, old_entry.unit, new_data[scanline])
+
+            # reassign whole section to new transposed section
+            mysection = transposed_section
+
+
+        for record in mysection:
+         
+            if record is None:
+                # This record is set to none by the transpose functionality,
+                # see above. Just ignore the record and continue
+                continue
+            
             # linked index handles BUFR replication factors with multiple data
             # entries in one subsection.
             linked_index = replication_indicies[record.index] 
@@ -398,12 +457,44 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             # This variable determines which record number in the netcdf variables the
             # data should be stored 
             bfr_count[linked_index] += 1
-        print ",".join([str(i) for i in bfr_count[0:40]])
 
 
         # we have inserted the first bufr section and hence all variables that
         # can be packed into scalars or per scan vectors should be accounted for
         scalars_handled = True 
+
+
+        # We have inserted all data for this subsection. We need to level out
+        # the differences in the unlimited dimension. The differenences stems
+        # from the bufr replication factor.
+
+        # find the max index of the unlimited dimension
+        max_record = max(bfr_count)
+       
+        for record in mysection:
+           
+            if record is None:
+                # record set to None by transpose functionality above
+                continue
+
+            # only insert fill data for records with a netcdf_name attribute
+            try:
+                nc_var = rootgrp.variables[vname_map[record.index]\
+                        ['netcdf_name']]
+            except KeyError:
+                continue
+
+            fill_rows = max_record - bfr_count[record.index]
+            for i in range(fill_rows):
+                _insert_record(vname_map, nc_var, record, scalars_handled, 
+                        bfr_count[record.index], record.index)
+                # This variable determines which record number in the netcdf variables the
+                # data should be stored 
+                bfr_count[record.index] += 1
+        
+
+
+
 
     rootgrp.close()
     del bfr

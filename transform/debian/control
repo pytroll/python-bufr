@@ -7,6 +7,6 @@ Standards-Version: 3.7.2
 
 Package: python-bufr-transform
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, python-bufr-metadb, python-netcdf
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-bufr-metadb, pynetcdf4
 Description: DMI/TI prodvides BUFR translation scripts
  Currently only bufr2netcdf script provided. 

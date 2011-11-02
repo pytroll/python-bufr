@@ -487,7 +487,8 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             except KeyError:
                 continue
             
-            _insert_record(vname_map, nc_var, record, scalars_handled, bfr_count[linked_index], linked_index)
+            _insert_record(vname_map, nc_var, record, scalars_handled, 
+                    bfr_count[linked_index], linked_index)
            
             # This variable determines which record number in the netcdf variables the
             # data should be stored 

@@ -1,3 +1,11 @@
+python-bufr-transform (0.1-2) unstable; urgency=low
+
+  * More robust implementation.
+  * Changed to using pynetcdf4 ... DMI specific package !!!
+  * Handles transposed sections
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 12 Oct 2009 13:30:01 +0200
+
 python-bufr-transform (0.1-1) unstable; urgency=low
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
