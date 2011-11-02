@@ -1,7 +1,7 @@
 from distutils.core import setup, Extension
 
 setup(name='bufr-metadb',
-      version='0.1',
+      version='0.2-2',
       description='Translates BUFR variable names and units',
       author='Kristian Rune Larsen',
       author_email='krl@dmi.dk',
