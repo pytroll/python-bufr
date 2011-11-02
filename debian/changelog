@@ -1,3 +1,11 @@
+python-bufr (0.2-2) unstable; urgency=low
+
+  * Bugfixes, better error handeling i C code. Errors are due to bad input
+    data.
+  * Allocates more space for message to handle EUMETSAT SSMIS BUFR files
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Wed, 02 Nov 2011 12:29:15 +0100
+
 python-bufr (0.2-1) unstable; urgency=low
 
   * removed emos dependency
