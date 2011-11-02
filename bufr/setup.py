@@ -32,7 +32,7 @@ BUFRFile = Extension('bufr/_BUFRFile',
                                      NUMPY_INCLUDE_PATH])
 
 setup(name='python-bufr',
-      version='0.3',
+      version='0.2-2',
       description='Generic Python BUFR file reader based on the ECMWF BUFR library',
       author='Kristian Rune Larsen',
       author_email='krl@dmi.dk',
