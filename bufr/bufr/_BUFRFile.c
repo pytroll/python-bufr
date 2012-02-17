@@ -245,7 +245,7 @@ typedef struct {
 
     
     // to hold basic information from BUFR section 1
-    int eddition, centre, update_sequence, message_type
+    int edition, centre, update_sequence, message_type
         ,message_sub_type, local_table_version, year,month, day, hour ,minute, 
         master_table, master_table_version;
 
@@ -279,7 +279,7 @@ static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) 
 	self->cvals = PyMem_New(char,KVALS*80); 
 
 
-    self->eddition = 
+    self->edition = 
         self->centre = 
         self->update_sequence = 
         self->message_type = 
@@ -377,7 +377,6 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 	/* read entry into buffer*/
 	status = readbufr( self->inpfp, bufr_message, &length);
 
-
 	if( status == -1 ) {
 		/*-1 is end of file*/
 		return NULL;
@@ -422,19 +421,38 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
         self->kelem = KELEM;
 
     // Get basic information from BUFR section 1
-    self->eddition = self->ksec1[3];
-    self->centre = self->ksec1[4];
-    self->update_sequence = self->ksec1[5];
-    self->message_type = self->ksec1[7];
-    self->message_sub_type = self->ksec1[8];
-    self->local_table_version = self->ksec1[9];
-    self->year = self->ksec1[10];
-    self->month = self->ksec1[11];
-    self->day = self->ksec1[12];
-    self->hour = self->ksec1[13];
-    self->minute = self->ksec1[14];
-    self->master_table = self->ksec1[15];
-    self->master_table_version = self->ksec1[16];
+
+/*     self->edition = self->ksec1[3]; */
+/*     self->centre = self->ksec1[4]; */
+/*     self->update_sequence = self->ksec1[5]; */
+/*     self->message_type = self->ksec1[7]; */
+/*     self->message_sub_type = self->ksec1[8]; */
+/*     self->local_table_version = self->ksec1[9]; */
+/*     self->year = self->ksec1[10]; */
+/*     self->month = self->ksec1[11]; */
+/*     self->day = self->ksec1[12]; */
+/*     self->hour = self->ksec1[13]; */
+/*     self->minute = self->ksec1[14]; */
+/*     self->master_table = self->ksec1[15]; */
+/*     self->master_table_version = self->ksec1[16]; */
+
+    self->edition = self->ksec1[1];
+    self->centre = self->ksec1[2];
+    self->update_sequence = self->ksec1[3];
+    self->message_type = self->ksec1[5];
+    self->message_sub_type = self->ksec1[6];
+    self->local_table_version = self->ksec1[7];
+    self->year = self->ksec1[8];
+    self->month = self->ksec1[9];
+    self->day = self->ksec1[10];
+    self->hour = self->ksec1[11];
+    self->minute = self->ksec1[12];
+    self->master_table = self->ksec1[13];
+    self->master_table_version = self->ksec1[14];
+
+    /* temporary array to store returned Fortran ordered data */
+    double * tvalues;
+    tvalues = PyMem_New(double, KVALS);
 
 	kerr = 0;
 	bufrex_(&length,
@@ -449,27 +467,24 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
             self->cnames, 
             self->cunits ,
             &(self->kvals),
-            self->values, 
+		tvalues,
             self->cvals,
             &kerr);
 
 	/* find number of subsets = number of meassurements */
 	int nsup = self->ksup[5];
 
-    /* since we are comming from shitty fortran we need to rotate the values , in order for it to make sense in C*/
-    double * tvalues;
-    tvalues = PyMem_New(double, KVALS);
+	/* use the fact that bufrex also returns actual nof elements */
+	/* nof values = nof subsets times nof elements? */
+	self->kelem = self->ksup[4];
 
-    int cr,cc;
-    for(cr=0; cr < self->kelem ; cr++)
-        for(cc=0; cc< nsup; cc++)
-            *(tvalues + cr*nsup + cc) = *(self->values + cc*self->kelem + cr);
+	/* convert from Fortran to C-order */
+	int cr,cc;
+	for(cr=0; cr < self->kelem ; cr++)
+	  for(cc=0; cc< nsup; cc++)
+	    *(self->values + cr*nsup + cc) = *(tvalues + cc*self->kelem + cr);
     
-    /* Copy new elements back to original array*/
-    for(cr=0; cr < KVALS ; cr++)
-        self->values[cr] = tvalues[cr];
-
-    PyMem_Free(tvalues);
+	PyMem_Free(tvalues);
 
 	if ( kerr )
 	{
@@ -685,7 +700,7 @@ static PyObject * BUFRFile_keys(_BUFRFile_BUFRFileObject *self) {
 
 static PyMemberDef _BUFRFile_Members[] = {
     {"filename", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileObject, filename), 0, "filename"},
-    {"eddition" , T_INT, offsetof(_BUFRFile_BUFRFileObject, eddition), 0, "eddition"},
+    {"edition" , T_INT, offsetof(_BUFRFile_BUFRFileObject, edition), 0, "edition"},
     {"centre" , T_INT, offsetof(_BUFRFile_BUFRFileObject, centre), 0, "centre"},
     {"update_sequence" , T_INT, offsetof(_BUFRFile_BUFRFileObject, update_sequence), 0, "update_sequence"},
     {"message_type" , T_INT, offsetof(_BUFRFile_BUFRFileObject, message_type), 0, "message_type"},
