@@ -1,3 +1,11 @@
+python-bufr (0.2-3) unstable; urgency=low
+
+  * Optimization from Tomas Landelius, only the necessary part of the message
+    is read and unecessary extra copy avoided. 
+  * Spell corrections from Tomas Landelius
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Fri, 17 Feb 2012 14:41:30 +0100
+
 python-bufr (0.2-2) unstable; urgency=low
 
   * Bugfixes, better error handeling i C code. Errors are due to bad input
