@@ -1,41 +1,51 @@
 #!/usr/bin/env python
+#
+# python-bufr , wrapper for ECMWF BUFR library
+# 
+# Copyright (C) 2012  Kristian Rune Larsen
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+""" install using LDFLAGS=-L/<path to emos library> CFLAGS=-I/<emos headers> python setup.py install  """
+
 import os
 import sys
 from distutils.core import setup, Extension 
 
-#default_np_path = '/usr/lib/python2.5/site-packages/numpy/core/include/'
-default_np_path = '/usr/share/pyshared/numpy/core/include/'
-try:
-    NUMPY_INCLUDE_PATH=os.environ['NUMPY_INCLUDE_PATH']
-except:
-    if os.path.exists(default_np_path):
-        NUMPY_INCLUDE_PATH=default_np_path
-    else:
-        print """Please define system variable 
-            
-            NUMPY_INCLUDE_PATH, directory containing numpy related include files
-                                like numpy/arrayobject.h, numpy/arrayscalars.h, etc.
-            """
-        sys.exit(1)
-
-##,'-DNPY_SIZE_OF_DOUBLE=8'
 BUFRFile = Extension('bufr/_BUFRFile',
                      sources = ['bufr/_BUFRFile.c',], 
                      extra_compile_args = ['-O3','-g','-fstack-protector-all',
                          '-D_FORTIFY_SOURCE=2'], 
                      extra_link_args = [], 
-                     libraries = ['emos','gfortran',],
-                     library_dirs = ['/opt/lib/emos',
-                                     '/usr/lib64','/usr/local/lib64',],
-                     include_dirs = ['/usr/include',
-                                     '/usr/local/include',
-                                     NUMPY_INCLUDE_PATH])
-
+                     libraries = ['emos','gfortran',],)
 setup(name='python-bufr',
-      version='0.2-2',
+      version='0.2-4',
       description='Generic Python BUFR file reader based on the ECMWF BUFR library',
       author='Kristian Rune Larsen',
       author_email='krl@dmi.dk',
+      download_url="http://python-bufr.googlecode.com/files/python-bufr-0.2-4.tar.gz",
+      url="http://python-bufr.googlecode.com/",
+      install_requires=['numpy',],
+      classifiers=[
+      'Development Status :: 5 - Production/Stable',
+      'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+      'Programming Language :: Python',
+      'Operating System :: OS Independent',
+      'Intended Audience :: Science/Research',
+      'Topic :: Scientific/Engineering'
+      ],
       packages = ['bufr'],
       ext_modules = [ BUFRFile, ]
      )
