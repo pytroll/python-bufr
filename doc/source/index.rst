@@ -11,7 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-.. include install.rst
+   install
 
 .. automodule:: bufr
    :members:
