@@ -22,20 +22,20 @@
 
 import os
 import sys
-from distutils.core import setup, Extension 
+from setuptools import setup, Extension 
 
 BUFRFile = Extension('bufr/_BUFRFile',
                      sources = ['bufr/_BUFRFile.c',], 
                      extra_compile_args = ['-O3','-g','-fstack-protector-all',
                          '-D_FORTIFY_SOURCE=2'], 
                      extra_link_args = [], 
-                     libraries = ['emos','gfortran',],)
+                     libraries = ['bufr','gfortran',],)
 setup(name='python-bufr',
-      version='0.2-4',
+      version='0.2-5',
       description='Generic Python BUFR file reader based on the ECMWF BUFR library',
       author='Kristian Rune Larsen',
       author_email='krl@dmi.dk',
-      download_url="http://python-bufr.googlecode.com/files/python-bufr-0.2-4.tar.gz",
+      download_url="http://python-bufr.googlecode.com/files/python-bufr-0.2-5.tar.gz",
       url="http://python-bufr.googlecode.com/",
       install_requires=['numpy',],
       classifiers=[
