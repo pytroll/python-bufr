@@ -34,16 +34,16 @@ can be found in config directory.
 
 The config files are sorted by OS, architecture and compiler 
 
-The OS can be found using the following command
-{{{
- uname -s | tr '[A-Z]' '[a-z]'
-}}}
+The OS can be found using the following command::
+
+    uname -s | tr '[A-Z]' '[a-z]'
+
 E.g the output of this command could be linux.
 
-The platform can be found using the following command
-{{{
-uname -m
-}}}
+The platform can be found using the following command::
+
+    uname -m
+
 E.g the ouput of this command could be x84_64
 
 I normally choose to use the gfortran compiler, and if I avoid the 64 bit reals
@@ -52,7 +52,7 @@ will be:  config/config.linux_gfortranA64 following the pattern
 config.<OS><_compiler><architecture>. Notice that for the default compiler the
 _compiler will be an empty string.
 
-You will need to edit the file and add the option '-fPIC' to the CFLAGS and
+You will need to edit the file and add the option *-fPIC* to the CFLAGS and
 FFLAGS variable.
 
 If you do not know which file to edit the build_library script prints it out,
@@ -80,11 +80,9 @@ environment. See http://pypi.python.org/pypi/virtualenv
 Install Using the Pypi Package
 ++++++++++++++++++++++++++++++
 
-To install using pypi use the following commands
-
-{{{
-LDFLAGS=-L/<path to libbufr directory> pip install python-bufr
-}}}
+To install using pypi use the following commands::
+  
+  LDFLAGS=-L/<path to libbufr directory> pip install python-bufr
 
 The LDFLAGS variable tells the installation script in what directory to find
 the libbufr.a library. 
@@ -93,10 +91,9 @@ the libbufr.a library.
 Install Using Source
 ++++++++++++++++++++
 
-Download the source package from the google-code download page. Untar the package and run the setup.py script
-{{{
-LDFLAGS=-L/<path to libbufr directory> python setup.py install 
-}}}
+Download the source package from the google-code download page. Untar the package and run the setup.py script::
+
+    LDFLAGS=-L/<path to libbufr directory> python setup.py install 
 
 The LDFLAGS variable tells the installation script in what directory to find
 the libbufr.a library. 

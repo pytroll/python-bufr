@@ -22,7 +22,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Python-bufr v0.2.3 documentation" href="index.html" /> 
+    <link rel="top" title="Python-bufr v0.2.3 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Python-bufr’s documentation!" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -31,6 +32,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Python-bufr’s documentation!"
+             accesskey="P">previous</a> |</li>
         <li><a href="index.html">Python-bufr v0.2.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -66,23 +70,21 @@ library_dirs variable i the setup.py file.</p>
 need to change the configuration file for you platform. The configuration files
 can be found in config directory.</p>
 <p>The config files are sorted by OS, architecture and compiler</p>
-<p>The OS can be found using the following command
-{{{</p>
-<blockquote>
-uname -s | tr &#8216;[A-Z]&#8217; &#8216;[a-z]&#8217;</blockquote>
-<p>}}}
-E.g the output of this command could be linux.</p>
-<p>The platform can be found using the following command
-{{{
-uname -m
-}}}
-E.g the ouput of this command could be x84_64</p>
+<p>The OS can be found using the following command:</p>
+<div class="highlight-python"><pre>uname -s | tr '[A-Z]' '[a-z]'</pre>
+</div>
+<p>E.g the output of this command could be linux.</p>
+<p>The platform can be found using the following command:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">uname</span> <span class="o">-</span><span class="n">m</span>
+</pre></div>
+</div>
+<p>E.g the ouput of this command could be x84_64</p>
 <p>I normally choose to use the gfortran compiler, and if I avoid the 64 bit reals
 that the build_library script questions me for the resulting configuration file
 will be:  config/config.linux_gfortranA64 following the pattern
 config.&lt;OS&gt;&lt;_compiler&gt;&lt;architecture&gt;. Notice that for the default compiler the
 _compiler will be an empty string.</p>
-<p>You will need to edit the file and add the option &#8216;-fPIC&#8217; to the CFLAGS and
+<p>You will need to edit the file and add the option <em>-fPIC</em> to the CFLAGS and
 FFLAGS variable.</p>
 <p>If you do not know which file to edit the build_library script prints it out,
 so you can run the script first, find the config file, edit it and then rerun
@@ -105,19 +107,17 @@ packages , you can install from source or you can use the pypi package.</p>
 environment. See <a class="reference external" href="http://pypi.python.org/pypi/virtualenv">http://pypi.python.org/pypi/virtualenv</a></p>
 <div class="section" id="install-using-the-pypi-package">
 <h3>Install Using the Pypi Package<a class="headerlink" href="#install-using-the-pypi-package" title="Permalink to this headline">¶</a></h3>
-<p>To install using pypi use the following commands</p>
-<p>{{{
-LDFLAGS=-L/&lt;path to libbufr directory&gt; pip install python-bufr
-}}}</p>
+<p>To install using pypi use the following commands:</p>
+<div class="highlight-python"><pre>LDFLAGS=-L/&lt;path to libbufr directory&gt; pip install python-bufr</pre>
+</div>
 <p>The LDFLAGS variable tells the installation script in what directory to find
 the libbufr.a library.</p>
 </div>
 <div class="section" id="install-using-source">
 <h3>Install Using Source<a class="headerlink" href="#install-using-source" title="Permalink to this headline">¶</a></h3>
-<p>Download the source package from the google-code download page. Untar the package and run the setup.py script
-{{{
-LDFLAGS=-L/&lt;path to libbufr directory&gt; python setup.py install
-}}}</p>
+<p>Download the source package from the google-code download page. Untar the package and run the setup.py script:</p>
+<div class="highlight-python"><pre>LDFLAGS=-L/&lt;path to libbufr directory&gt; python setup.py install</pre>
+</div>
 <p>The LDFLAGS variable tells the installation script in what directory to find
 the libbufr.a library.</p>
 </div>
@@ -146,6 +146,9 @@ the libbufr.a library.</p>
 </li>
 </ul>
 
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Python-bufr&#8217;s documentation!</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/install.txt"
@@ -174,6 +177,9 @@ the libbufr.a library.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Python-bufr’s documentation!"
+             >previous</a> |</li>
         <li><a href="index.html">Python-bufr v0.2.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
