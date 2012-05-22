@@ -1,5 +1,5 @@
 Install 
--------
+=======
 
 Short description on how to install the python-bufr module from source
 
@@ -22,6 +22,14 @@ If you are using easy_install or pip you only need to manually install the ECMWF
     ECMWF. In case you want to use the emos library you will have to change the
     library_dirs variable i the setup.py file.
 
+Some notes for old users. The dependencies of the packages have moved back and
+forth between the ECMWF bufrdc package and the ECMWF emos package ... it is not
+very nice I know. I thought that the emos library was more widely used and the
+Ubuntu 10.04 distribution included an emos debian package so I switched to the
+emos package. Now I have moved back to the bufrdc package since the emos
+package in the ubuntu distibution will not work anyway because you need to
+ajust the compiler flags. The bufrdc package us prefreed right now because it
+is smaller. Please do not hesitate to let me know if you think otherwise. 
 
 ECMWF BUFR Library
 ++++++++++++++++++
@@ -48,9 +56,15 @@ E.g the ouput of this command could be x84_64
 
 I normally choose to use the gfortran compiler, and if I avoid the 64 bit reals
 that the build_library script questions me for the resulting configuration file
-will be:  config/config.linux_gfortranA64 following the pattern
-config.<OS><_compiler><architecture>. Notice that for the default compiler the
-_compiler will be an empty string.
+will be::  
+
+ config/config.linux_gfortranA64 
+ 
+following the pattern:: 
+
+  config.<OS><_compiler><architecture>
+  
+Notice that for the default compiler the '_compiler' will be an empty string.
 
 You will need to edit the file and add the option *-fPIC* to the CFLAGS and
 FFLAGS variable.
@@ -93,8 +107,27 @@ Install Using Source
 
 Download the source package from the google-code download page. Untar the package and run the setup.py script::
 
-    LDFLAGS=-L/<path to libbufr directory> python setup.py install 
+  LDFLAGS=-L/<path to libbufr directory> python setup.py install 
 
 The LDFLAGS variable tells the installation script in what directory to find
 the libbufr.a library. 
+
+
+Install Using Debian Packages
++++++++++++++++++++++++++++++
+
+The debian packages are build for an Ubuntu lucid 64 bit. 
+
+First add the python-bufr repository your apt sources list::
+
+    sudo -s # be root otherwise cat will not work
+    cat << EOF > /etc/apt/sources.list.d/python-bufr.list
+    #
+    # python bufr repository
+    deb http://python-bufr.googlecode.com/svn/apt lucid main
+    EOF
+    
+    apt-get update
+    apt-get install python-bufr
+
 

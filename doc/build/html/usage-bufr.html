@@ -1,0 +1,146 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Usage &mdash; Python-bufr v0.2.3 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.2.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Python-bufr v0.2.3 documentation" href="index.html" />
+    <link rel="prev" title="Install" href="install.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="install.html" title="Install"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Python-bufr v0.2.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<p>The debian packages install the python packages and scripts in <cite>/opt</cite> hence you will need to set the following variables (in bash):</p>
+<div class="highlight-python"><pre>export PATH=$PATH:/opt/bin
+export PYTHONPATH=/opt/lib/python2.5/site-packages/</pre>
+</div>
+<p>If you have an alternative path to your bufr tables you will need to set:</p>
+<div class="highlight-python"><pre>export BUFR_TABLES=/path/bufrtables/</pre>
+</div>
+<p><em>Remember</em> the trailing <cite>/</cite></p>
+<p>By default the ECMWF BUFR library writes out some status information every time a new BUFR file is opened. To supress the status info you will need to set the following variable:</p>
+<div class="highlight-python"><pre>export PRINT_TABLE_NAMES = false</pre>
+</div>
+<div class="section" id="reading-and-inspecting-bufr-data">
+<h2>Reading and Inspecting BUFR data<a class="headerlink" href="#reading-and-inspecting-bufr-data" title="Permalink to this headline">¶</a></h2>
+<p>This assumes the above variables are correctly set.:</p>
+<div class="highlight-python"><pre>Python 2.5.2 (r252:60911, Jul 22 2009, 15:35:03)
+[GCC 4.2.4 (Ubuntu 4.2.4-1ubuntu3)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; import bufr
+&gt;&gt;&gt; bfr = bufr.BUFRFile('NPR_TDIB.SA_D10108_S1823_E2008_B3353637_NS')</pre>
+</div>
+<p>This will open the BUFR file.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">bfr</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+<span class="go">                   ECMWF</span>
+
+<span class="go">      BUFR DECODING SOFTWARE VERSION -  7.2</span>
+<span class="go">            1 APRIL  2007.</span>
+
+
+
+<span class="go"> Your path for bufr tables is :</span>
+<span class="go"> /home/krl/bufrtest/bufrtables/</span>
+<span class="go">BUFR TABLES TO BE LOADED  B0000000300007004001.TXT,D0000000300007004001.TXT</span>
+</pre></div>
+</div>
+<p>The BUFRFile object is a iterator and supports the &#8216;next()&#8217; method. This means that you can use the BUFRFile object in a for-loop:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">bfr</span><span class="p">:</span> <span class="k">print</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Usage</a><ul>
+<li><a class="reference internal" href="#reading-and-inspecting-bufr-data">Reading and Inspecting BUFR data</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Install</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/usage-bufr.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="install.html" title="Install"
+             >previous</a> |</li>
+        <li><a href="index.html">Python-bufr v0.2.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Kristian Rune Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

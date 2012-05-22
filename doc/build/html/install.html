@@ -23,6 +23,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Python-bufr v0.2.3 documentation" href="index.html" />
+    <link rel="next" title="Usage" href="usage-bufr.html" />
     <link rel="prev" title="Welcome to Python-bufr’s documentation!" href="index.html" /> 
   </head>
   <body>
@@ -32,6 +33,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="usage-bufr.html" title="Usage"
+             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Welcome to Python-bufr’s documentation!"
              accesskey="P">previous</a> |</li>
@@ -63,6 +67,14 @@ both for the C and Fortran code please see instructions below.</p>
 ECMWF. In case you want to use the emos library you will have to change the
 library_dirs variable i the setup.py file.</p>
 </div>
+<p>Some notes for old users. The dependencies of the packages have moved back and
+forth between the ECMWF bufrdc package and the ECMWF emos package ... it is not
+very nice I know. I thought that the emos library was more widely used and the
+Ubuntu 10.04 distribution included an emos debian package so I switched to the
+emos package. Now I have moved back to the bufrdc package since the emos
+package in the ubuntu distibution will not work anyway because you need to
+ajust the compiler flags. The bufrdc package us prefreed right now because it
+is smaller. Please do not hesitate to let me know if you think otherwise.</p>
 <div class="section" id="ecmwf-bufr-library">
 <h3>ECMWF BUFR Library<a class="headerlink" href="#ecmwf-bufr-library" title="Permalink to this headline">¶</a></h3>
 <p>Follow the install instructions in the package README file and use the
@@ -81,9 +93,14 @@ can be found in config directory.</p>
 <p>E.g the ouput of this command could be x84_64</p>
 <p>I normally choose to use the gfortran compiler, and if I avoid the 64 bit reals
 that the build_library script questions me for the resulting configuration file
-will be:  config/config.linux_gfortranA64 following the pattern
-config.&lt;OS&gt;&lt;_compiler&gt;&lt;architecture&gt;. Notice that for the default compiler the
-_compiler will be an empty string.</p>
+will be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">config</span><span class="o">/</span><span class="n">config</span><span class="o">.</span><span class="n">linux_gfortranA64</span>
+</pre></div>
+</div>
+<p>following the pattern:</p>
+<div class="highlight-python"><pre>config.&lt;OS&gt;&lt;_compiler&gt;&lt;architecture&gt;</pre>
+</div>
+<p>Notice that for the default compiler the &#8216;_compiler&#8217; will be an empty string.</p>
 <p>You will need to edit the file and add the option <em>-fPIC</em> to the CFLAGS and
 FFLAGS variable.</p>
 <p>If you do not know which file to edit the build_library script prints it out,
@@ -121,6 +138,21 @@ the libbufr.a library.</p>
 <p>The LDFLAGS variable tells the installation script in what directory to find
 the libbufr.a library.</p>
 </div>
+<div class="section" id="install-using-debian-packages">
+<h3>Install Using Debian Packages<a class="headerlink" href="#install-using-debian-packages" title="Permalink to this headline">¶</a></h3>
+<p>The debian packages are build for an Ubuntu lucid 64 bit.</p>
+<p>First add the python-bufr repository your apt sources list:</p>
+<div class="highlight-python"><pre>sudo -s # be root otherwise cat will not work
+cat &lt;&lt; EOF &gt; /etc/apt/sources.list.d/python-bufr.list
+#
+# python bufr repository
+deb http://python-bufr.googlecode.com/svn/apt lucid main
+EOF
+
+apt-get update
+apt-get install python-bufr</pre>
+</div>
+</div>
 </div>
 </div>
 
@@ -140,6 +172,7 @@ the libbufr.a library.</p>
 <li><a class="reference internal" href="#install-python-bufr">Install Python-Bufr</a><ul>
 <li><a class="reference internal" href="#install-using-the-pypi-package">Install Using the Pypi Package</a></li>
 <li><a class="reference internal" href="#install-using-source">Install Using Source</a></li>
+<li><a class="reference internal" href="#install-using-debian-packages">Install Using Debian Packages</a></li>
 </ul>
 </li>
 </ul>
@@ -149,6 +182,9 @@ the libbufr.a library.</p>
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Welcome to Python-bufr&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="usage-bufr.html"
+                        title="next chapter">Usage</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/install.txt"
@@ -177,6 +213,9 @@ the libbufr.a library.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="usage-bufr.html" title="Usage"
+             >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Welcome to Python-bufr’s documentation!"
              >previous</a> |</li>

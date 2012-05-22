@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    install
+   usage-bufr
 
 .. automodule:: bufr
    :members:
