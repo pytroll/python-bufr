@@ -37,7 +37,7 @@ import bufr.metadb as bufrmetadb
 from bufr.transform import BUFR2NetCDFError, netcdf_datatype
 
 # Log everything, and send it to stderr.
-logger = logging.getLogger('bufr2netcdf')
+LOG = logging.getLogger(__name__)
 
 def _create_global_attributes(rootgrp, instr):
     """ Creates global netcdf attributes and assigns values
@@ -48,7 +48,7 @@ def _create_global_attributes(rootgrp, instr):
 
     """
    
-    logger.debug("Creating global attributes")
+    LOG.debug("Creating global attributes")
 
     rootgrp.Conventions = "CF-1.0"
     rootgrp.title = instr.title.encode('latin-1')
@@ -68,7 +68,7 @@ def _create_dimensions(rootgrp, vname_map):
 
     """ 
 
-    logger.debug("Creating dimensions")
+    LOG.debug("Creating dimensions")
 
     # Create basic dimensions in the NetCDF file
 
@@ -109,7 +109,7 @@ def _create_variables(rootgrp, vname_map):
                 netcdf variable name and variable object
 
     """
-    logger.debug("Creating variables")
+    LOG.debug("Creating variables")
     nc_vars = {}
     for key, ncvar_params in vname_map.iteritems():
         
@@ -185,7 +185,7 @@ def _create_variables(rootgrp, vname_map):
 
 
         except KeyError, key_exception:
-            logger.exception("Unable to find netcdf conversion, parameters")
+            LOG.exception("Unable to find netcdf conversion, parameters")
 
 
     return nc_vars
@@ -225,7 +225,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
         var_type = vname_map[linked_index]['var_type']
         if var_type not in ['int', 'float', 'str', 
                 'double', 'long']:
-            logger.error("No valid type defined")
+            LOG.error("No valid type defined")
             return
        
         # Handle 32/64 numpy conversion
@@ -244,7 +244,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                     try:
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
-                        logger.exception("Unable to convert "+\
+                        LOG.exception("Unable to convert "+\
                                 "value for %s in %s" %\
                                 ( data, vname_map[linked_index]['netcdf_name']))
                         nc_var[ 0 ] = vname_map[linked_index]\
@@ -275,14 +275,14 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                 try:
                     nc_var[ count ] = eval(var_type)(data)
                 except OverflowError, overflow_error:
-                    logger.exception("Unable to convert value for %s in %s" %\
+                    LOG.exception("Unable to convert value for %s in %s" %\
                             ( data, vname_map[linked_index]['netcdf_name']))
                     nc_var[ count ] = vname_map[linked_index]\
                             ['netcdf__FillValue']
                 return
 
         except bufr.RecordPackError, pack_error:
-            logger.exception("Unable to pack data for %s" %\
+            LOG.exception("Unable to pack data for %s" %\
                     ( vname_map[linked_index]['netcdf_name'], ))
 
         
@@ -302,7 +302,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
         nc_var[ count, : ] = data.astype(var_type)
 
     except ValueError, val_err:
-        logger.exception("Unable to insert records %s" % (val_err, ))
+        LOG.exception("Unable to insert records %s" % (val_err, ))
 
 def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """
@@ -329,8 +329,8 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     bend = instr.bufr_record_end
     transpose = instr.transposed
 
-    logger.debug("start index: %s, end index: %s" % (bstart, bend) )
-    logger.debug("transposed : %s" % transpose )
+    LOG.debug("start index: %s, end index: %s" % (bstart, bend) )
+    LOG.debug("transposed : %s" % transpose )
 
 
     # Read BUFR file keys and get corresponding NetCDF names from 
@@ -375,11 +375,11 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     # This section inserts data into the NetCDF variables
     #
 
-    logger.debug("Closing netcdf handle after setup")
+    LOG.debug("Closing netcdf handle after setup")
 
     rootgrp.close()
     
-    logger.debug("Opening netcdf handle after setup")
+    LOG.debug("Opening netcdf handle after setup")
     
     rootgrp = Dataset(nc_fn, 'a', format='NETCDF4')
     
@@ -449,7 +449,8 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             for key, index_group in index_groups.iteritems():
                 old_entry = section[key]
                 new_data = np.vstack(\
-                        [section[i].data for i in index_group]).transpose()
+                        [section[i].data for i in index_group \
+                            if i < len(section)]).transpose()
                 # transposed all linked scanlines and hardlink replication base
                 # key
                 for scanline in new_data:
@@ -462,7 +463,7 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
             mysection = transposed_section
 
         if transpose and (len(section) != len(transposed_section)):
-            logger.debug("Different section lengths orig. %s transposed %s" %\
+            LOG.debug("Different section lengths orig. %s transposed %s" %\
                     (len(section), len(transposed_section)))
 
         for record in mysection:
