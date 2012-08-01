@@ -124,6 +124,11 @@ def pack_record( record ):
         N = len(record.data) # throws exception if not supported
 
         fixed_elem = record.data.min()
+        nofill_values = record_data !? BUFRRecordInfo.fillvalue_double
+
+        data = record.data[nofill_values]
+
+        fixed_elem = data.min()
         eps = 0
         try:
             # find machine epsilon for this type
@@ -134,7 +139,7 @@ def pack_record( record ):
         
         # compare all elements to the fixed element, maybe a bit slow since
         # it's a while array operation
-        if (record.data.max() - fixed_elem) > 10*eps:
+        if (data.max() - fixed_elem) > 10*eps:
             # One of the numbers differ 
             raise RecordPackError("Heteogenous data, index: %s name: %s" % (record.index, record.name))
 
