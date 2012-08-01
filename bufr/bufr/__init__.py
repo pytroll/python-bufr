@@ -124,7 +124,7 @@ def pack_record( record ):
         N = len(record.data) # throws exception if not supported
 
         fixed_elem = record.data.min()
-        nofill_values = record_data !? BUFRRecordInfo.fillvalue_double
+        nofill_values = record_data != BUFRRecordInfo.fillvalue_double
 
         data = record.data[nofill_values]
 
