@@ -26,9 +26,14 @@ Reads all BUFR files supported by the ECMWF library
 
 __revision__ = 0.1
 
+import logging
+
 from _BUFRFile import *
 import numpy as np
 from numpy import ma
+
+
+LOG = logging.getLogger(__name__)
 
 class RecordPackError(Exception):
     """ Raised when packing non homogenous data """
@@ -124,11 +129,16 @@ def pack_record( record ):
         N = len(record.data) # throws exception if not supported
 
         fixed_elem = record.data.min()
-        nofill_values = record_data != BUFRRecordInfo.fillvalue_double
+        nofill_values = record.data != BUFRRecordInfo.fillvalue_double
 
         data = record.data[nofill_values]
 
+        if len(data) == 0:
+            LOG.debug("zero size array name : %s , index : %s" % (record.name.rstrip(), record.index) )
+            return fixed_elem
+
         fixed_elem = data.min()
+
         eps = 0
         try:
             # find machine epsilon for this type
