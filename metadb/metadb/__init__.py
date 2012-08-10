@@ -35,7 +35,7 @@ import numpy as np
 
 import bufr
 
-logger = logging.getLogger('bufr_metadb')
+LOG = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -253,7 +253,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
 
         try:
 
-            logger.debug('Trying to create tables')
+            LOG.debug('Trying to create tables')
 
             self._session.add( BUFRDataType( 'int' ))
             self._session.add( BUFRDataType( 'float'))
@@ -315,19 +315,19 @@ class BUFRDescDBConn(SQLXMLMarshall):
             self._session.commit()
 
     
-            logger.debug('Done to creating tables')
+            LOG.debug('Done to creating tables')
 
         except IntegrityError:
     	## except Exception:
             self._session.rollback()
-            logger.debug('Tables already there')
+            LOG.debug('Tables already there')
 
 
     def save(self):
         try:
             self._session.commit()
         except:
-            logger.debug('rollback')
+            LOG.debug('rollback')
             self._session.rollback()
     #
     # General get methods
@@ -462,7 +462,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
         into a single netcdf varaible. This is necessary if replicate factors
         are used within each bufr subsection """
 
-        logger.debug("get replication indicies")
+        LOG.debug("get replication indicies")
 
         result_set = self._engine.execute("select seq, data \
                 from param_values\
@@ -565,7 +565,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
 
         """
         
-        logger.debug("get netcdf parameters")
+        LOG.debug("get netcdf parameters")
 
         bufr_params = self._session.query(BUFRParam).\
                 join(BUFRVar).join(BUFRDesc).join(BUFRParamType).\
@@ -692,7 +692,7 @@ class BUFRDescDBConn(SQLXMLMarshall):
         """ Inserts and entire list of BUFR file info entries into the database
         """
 
-        logger.debug("Inserting bufr keys")
+        LOG.debug("Inserting bufr keys")
 
         str_type = self._session.query( BUFRDataType ).\
                 filter( BUFRDataType.ptype == 'str' ).one()

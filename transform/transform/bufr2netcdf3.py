@@ -37,8 +37,7 @@ import bufr.metadb as bufrmetadb
 from bufr.transform import BUFR2NetCDFError, netcdf_datatype
 
 # Log everything, and send it to stderr.
-logger = logging.getLogger('bufr2netcdf')
-logger.setLevel(logging.DEBUG)
+LOG = logging.getLogger(__name__)
 
 
 def _create_global_attributes(rootgrp, instr):
@@ -182,7 +181,7 @@ def _create_variables(rootgrp, vname_map):
 
 
         except KeyError, key_exception:
-            logger.exception("Unable to find netcdf conversion, parameters")
+            LOG.exception("Unable to find netcdf conversion, parameters")
 
 
     return nc_vars
@@ -222,7 +221,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
         var_type = vname_map[linked_index]['var_type']
         if var_type not in ['int', 'float', 'str', 
                 'double', 'long']:
-            logger.error("No valid type defined")
+            LOG.error("No valid type defined")
             return
        
         # Handle 32/64 numpy conversion
@@ -241,7 +240,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                     try:
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
-                        logger.exception("Unable to convert "+\
+                        LOG.exception("Unable to convert "+\
                                 "value for %s in %s" %\
                                 ( data, vname_map[linked_index]['netcdf_name']))
                         nc_var[ 0 ] = vname_map[linked_index]\
@@ -272,14 +271,14 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                 try:
                     nc_var[ count ] = eval(var_type)(data)
                 except OverflowError, overflow_error:
-                    logger.exception("Unable to convert value for %s in %s" %\
+                    LOG.exception("Unable to convert value for %s in %s" %\
                             ( data, vname_map[linked_index]['netcdf_name']))
                     nc_var[ count ] = vname_map[linked_index]\
                             ['netcdf__FillValue']
                 return
 
         except bufr.RecordPackError, pack_error:
-            logger.exception("Unable to pack data for %s" %\
+            LOG.exception("Unable to pack data for %s" %\
                     ( vname_map[linked_index]['netcdf_name'], ))
 
         
@@ -299,7 +298,7 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
         nc_var[ count, : ] = data.astype(var_type)
 
     except ValueError, val_err:
-        logger.exception("Unable to insert records %s" % (val_err, ))
+        LOG.exception("Unable to insert records %s" % (val_err, ))
 
 def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
     """ Does the actual work in transforming the file """

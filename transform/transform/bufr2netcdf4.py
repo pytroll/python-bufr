@@ -244,12 +244,12 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                     try:
                         nc_var[ 0 ] = eval(var_type)(data)
                     except OverflowError, overflow_error:
-                        LOG.exception("Unable to convert "+\
-                                "value for %s in %s" %\
-                                ( data, vname_map[linked_index]['netcdf_name']))
-                        nc_var[ 0 ] = vname_map[linked_index]\
-                                ['netcdf__FillValue']
-                        
+                        fillvalue = vname_map[linked_index]['netcdf__FillValue']
+                        netcdf_name = vname_map[linked_index]['netcdf_name']
+                        LOG.debug("Unable to convert "+\
+                                "value for %s in %s returning fillvalue : %s " %\
+                                ( data, netcdf_name, fillvalue))
+                        nc_var[ 0 ] = fillvalue
                 return
             # Data packs to a single row
             elif packable_1dim:
@@ -275,15 +275,17 @@ def _insert_record(vname_map, nc_var, record, scalars_handled, count, linked_ind
                 try:
                     nc_var[ count ] = eval(var_type)(data)
                 except OverflowError, overflow_error:
-                    LOG.exception("Unable to convert value for %s in %s" %\
-                            ( data, vname_map[linked_index]['netcdf_name']))
-                    nc_var[ count ] = vname_map[linked_index]\
-                            ['netcdf__FillValue']
+                    fillvalue = vname_map[linked_index]['netcdf__FillValue']
+                    netcdf_name = vname_map[linked_index]['netcdf_name']
+                    LOG.debug("Unable to convert value for %s in %s returning fillvalue %s" %\
+                            ( data, netcdf_name, fillvalue))
+                    nc_var[ count ] = fillvalue
                 return
 
         except bufr.RecordPackError, pack_error:
             LOG.exception("Unable to pack data for %s" %\
                     ( vname_map[linked_index]['netcdf_name'], ))
+            raise
 
         
         
@@ -526,6 +528,11 @@ def bufr2netcdf(instr_name, bufr_fn, nc_fn, dburl=None):
                 # This variable determines which record number in the netcdf variables the
                 # data should be stored 
                 bfr_count[record.index] += 1
-        
+    
+
+    LOG.debug("Variable names and shape") 
+    for key, value in rootgrp.variables.iteritems():
+        LOG.debug("%s : shape: %s , fillvalue: %s " % (key, value.shape, value._FillValue))
+
     rootgrp.close()
     del bfr
