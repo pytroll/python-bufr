@@ -22,15 +22,18 @@
 # Author Kristian Rune Larsen <krl@dmi.dk>
 
 """ Provides base module for an XML serializable SQLAlchemy database """
+import types
+import sys
+import os
+import logging
 
 from sqlalchemy import *
 from sqlalchemy.orm import relation, backref, sessionmaker
 from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.orm.exc import *
 from sqlalchemy.exceptions import *
-import types
-import sys
-import os
+
+LOG = logging.getLogger(__name__)
 
 #
 # Database handler is wrapped as a Singleton instance 
@@ -96,7 +99,7 @@ class SQLXMLMarshall:
                         continue
 
                     if type(at_obj) == types.StringType or type(at_obj) == unicode:
-                        print "setting string type %s %s %s  " % (dobj,t,at_obj)    
+                        LOG.debug("setting string type %s %s %s  " % (dobj,t,at_obj))
                         
                         setattr( dobj, t, at_obj )
                         continue
@@ -105,10 +108,10 @@ class SQLXMLMarshall:
                         continue
                     except TypeError:
                         pass
-                    print "Setting %s %s %s" % (dobj, t, at_obj)
+                    LOG.debug("Setting %s %s %s" % (dobj, t, at_obj))
                     setattr( dobj, t, at_obj )
             except AttributeError, e:
-                print "Attibute Error %s " % e
+                LOG.error("Attibute Error %s " % e)
                 pass
             return dobj 
         
@@ -124,7 +127,7 @@ class SQLXMLMarshall:
                 self._session.commit()
                 return dobj.id
                 ##except Exception, e:
-                ##    print "Error: %s, unable to update entry" % e
+                ##    LOG.error("Error: %s, unable to update entry" % e)
                 ##    self._session.rollback()
         except AttributeError:
             pass
@@ -181,7 +184,7 @@ class SQLXMLMarshall:
                     xobj = getattr(obj,var)
                     table = xobj.__tablename__
                     table_id = "%s_id" % var
-                    print "Examening table %s id: %s  obj %s " % (table, table_id, obj)
+                    LOG.debug("Examening table %s id: %s  obj %s " % (table, table_id, obj))
                     if table_id in obj._xml_vars:
                         nobj = self._update_from_xml( xobj, obj)
                         setattr(obj,"%s_id" % var,nobj)

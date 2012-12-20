@@ -22,7 +22,7 @@
 
 import os
 import sys
-from setuptools import setup, Extension 
+from distutils.core import setup, Extension 
 
 BUFRFile = Extension('bufr/_BUFRFile',
                      sources = ['bufr/_BUFRFile.c',], 
