@@ -467,7 +467,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
             self->cnames, 
             self->cunits ,
             &(self->kvals),
-		tvalues,
+            tvalues,
             self->cvals,
             &kerr);
 
