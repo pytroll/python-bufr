@@ -1,7 +1,7 @@
 /*
 * python-bufr , wrapper for ECMWF BUFR library
 * 
-* Copyright (C) 2010  Kristian Rune Larsen
+* Copyright (C) 2010, 2014  Kristian Rune Larsen
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,14 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/*
+ * 19 Nov 2014: Reinoud Bokhorst (BMT ARGOSS)
+ * - Added parameter descriptors and character data to BUFRFileEntry elements.
+ * - Fix bug in data arrays when more than one subset.
+ * - Added num_subsets property to _BUFRFile_BUFRFileObject
+ *
+ */ 
 
 #include "Python.h"
 #include <stdio.h> 
@@ -61,6 +69,17 @@ extern void bufrex_(int * kbufl,
         double * values, 
         char * cvalues, 
         int * kerr);
+/* RB */
+extern void busel2_(int  * ksubset,
+                    int  * kelem,
+                    int  * ktdlen,
+                    int  * ktdlst,
+                    int  * ktdexl,
+                    int  * ktdexp,
+                    char * cnames,
+                    char * cunits,
+                    int  * kerr);
+
 
 int find_entry_type(double * data , int len) {
 	/* Figure out type double or int */
@@ -106,19 +125,22 @@ typedef struct {
 	 * Python object for holding data for each bufr element (scanline)
 	 */
 	PyObject_HEAD
-	PyObject * index;  /* variable index */
-	PyObject* name;     /* name */
-	PyObject* unit;     /* unit */
-	PyObject * data;  /* data array */
-
+    PyObject * descriptor; /* RB */
+    PyObject * index;  /* variable index */
+	PyObject * name;   /* name */
+	PyObject * unit;   /* unit */
+	PyObject * data;   /* data array */
+    PyObject * cdata;  /* RB char data array */
 
 } _BUFRFile_BUFRFileEntryObject;
 
 static PyMemberDef BUFRFileEntry_Members[] = {
     {"index", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, index), 0, "index"},
+    {"descriptor", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, descriptor), 0, "descriptor"},
     {"name", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, name), 0, "name"},
     {"unit", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, unit), 0, "unit"},
     {"data", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, data), 0, "data"},
+    {"cdata", T_OBJECT_EX, offsetof(_BUFRFile_BUFRFileEntryObject, cdata), 0, "cdata"},
     {NULL},
     /* Sentinel */
 };
@@ -129,8 +151,10 @@ static PyObject *BUFRFileEntry_new(PyTypeObject *type, PyObject *args, PyObject 
 	_BUFRFile_BUFRFileEntryObject *self = (_BUFRFile_BUFRFileEntryObject *) type->tp_alloc(type, 0);
 	self->name = NULL;
 	self->unit = NULL;
-	self->data = NULL;
+    self->data = NULL;
+    self->cdata = NULL;
 	self->index = NULL;
+    self->descriptor = NULL;   /* RB */
 
 	return (PyObject *) self;
 }
@@ -138,7 +162,8 @@ static PyObject *BUFRFileEntry_new(PyTypeObject *type, PyObject *args, PyObject 
 
 static void BUFRFileEntry_dealloc(_BUFRFile_BUFRFileEntryObject *self) {
     my_ref--;
-	Py_XDECREF(self->data); 
+    Py_XDECREF(self->data);
+    Py_XDECREF(self->cdata);
 	Py_XDECREF(self->name);
 	Py_XDECREF(self->unit);
 	self->ob_type->tp_free(self);
@@ -146,25 +171,31 @@ static void BUFRFileEntry_dealloc(_BUFRFile_BUFRFileEntryObject *self) {
 
 static int BUFRFileEntry_init(_BUFRFile_BUFRFileEntryObject *self, PyObject *args, PyObject *kw) {
 
-	PyObject * data;
+    PyObject * data;
+    PyObject * cdata;
 	PyObject * name;
 	PyObject * unit;
 	PyObject * index;
-
-	if (!PyArg_ParseTuple(args, "OOOO",&index, &name, &unit, &data)) {
+    PyObject * descriptor;  /* RB */
+    
+	if (!PyArg_ParseTuple(args, "OOOOOO",&index, &descriptor, &name, &unit, &data, &cdata)) {
 		return -1;
 	}
-	self->data = data;
+    self->data = data;
+    self->cdata = cdata;
 	self->name = name;
 	self->unit = unit;
 	self->index = index;
-
+    self->descriptor = descriptor;
+    
     my_ref++;
 
-	Py_XINCREF(self->data);
+    Py_XINCREF(self->data);
+    Py_XINCREF(self->cdata);
 	Py_XINCREF(self->unit);
 	Py_XINCREF(self->name);
 	Py_XINCREF(self->index);
+    Py_XINCREF(self->descriptor);
 
 	return 0;
 }
@@ -247,7 +278,7 @@ typedef struct {
     // to hold basic information from BUFR section 1
     int edition, centre, update_sequence, message_type
         ,message_sub_type, local_table_version, year,month, day, hour ,minute, 
-        master_table, master_table_version;
+        master_table, master_table_version, num_subsets;
 
 
 } _BUFRFile_BUFRFileObject;
@@ -291,7 +322,8 @@ static PyObject *BUFRFile_new(PyTypeObject *type, PyObject *args, PyObject *kw) 
         self->hour = 
         self->minute = 
         self->master_table = 
-        self->master_table_version = 0;
+        self->master_table_version =
+        self->num_subsets = 0;
 
 	return (PyObject *) self;
 }
@@ -393,12 +425,18 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
 		return NULL;
 	}
-	else if( status == -4 ) {
-		char error_str[40];
-		sprintf(error_str, "Too small input array: %d", status);
-		PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
-		return NULL;
-	}
+    else if( status == -4 ) {
+        char error_str[40];
+        sprintf(error_str, "Too small input array: %d", status);
+        PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
+        return NULL;
+    }
+    else if( status == -5 ) {
+        char error_str[80];
+        sprintf(error_str, "Misplaced EOF indicator 7777 (message corrupt?): %d", status);
+        PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
+        return NULL;
+    }
 	else if( status < 0 ) {
 		char error_str[40];
 		sprintf(error_str, "Error reading BUFR: %d", status);
@@ -449,6 +487,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
     self->minute = self->ksec1[12];
     self->master_table = self->ksec1[13];
     self->master_table_version = self->ksec1[14];
+    self->num_subsets = self->ksup[5];
 
     /* temporary array to store returned Fortran ordered data */
     double * tvalues;
@@ -467,20 +506,18 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
             self->cnames, 
             self->cunits ,
             &(self->kvals),
-            tvalues,
+		tvalues,
             self->cvals,
             &kerr);
 
 	/* find number of subsets = number of meassurements */
 	int nsup = self->ksup[5];
-
-	/* use the fact that bufrex also returns actual nof elements */
-	/* nof values = nof subsets times nof elements? */
-	self->kelem = self->ksup[4];
+    
 
 	/* convert from Fortran to C-order */
 	int cr,cc;
-	for(cr=0; cr < self->kelem ; cr++)
+    
+	for(cr=0; cr < self->ksup[4]; cr++)
 	  for(cc=0; cc< nsup; cc++)
 	    *(self->values + cr*nsup + cc) = *(tvalues + cc*self->kelem + cr);
     
@@ -494,6 +531,33 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 		return NULL;
 	}
 
+    /* RB */
+    kerr = 0;
+    int ksubset = 1;
+    int ktdlen, ktdexl;
+    busel2_(&ksubset,
+            &(self->kelem),
+            &ktdlen,
+            self->ktdlst,
+            &ktdexl,
+            self->ktdexp,
+            self->cnames,
+            self->cunits,
+            &kerr);
+    if ( kerr )
+    {
+        char error_str[40];
+        sprintf(error_str, "Error expanding data descriptors: %d", kerr);
+        PyErr_SetString(_BUFRFile_BUFRFileError, error_str);
+        return NULL;
+    }
+    /* End RB */
+
+    	
+    /* use the fact that bufrex also returns actual nof elements */
+    /* nof values = nof subsets times nof elements? */
+    self->kelem = self->ksup[4];
+    
 	int s,r;
 
 	/*
@@ -532,7 +596,7 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 				      string */
 
 		/* Create a New BUFRFileEntry object to hold the data */
-		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata, *index;
+		PyObject *bufr_entry_args, *bufr_entry, *name, *unit, *bdata, *cdata, *index, *descriptor;
 
         // FIXME we need to clear the error handler before continuing ...
         if (PyErr_Occurred()) {
@@ -555,7 +619,8 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
 	    }
 
         index = PyInt_FromLong(s);
-
+        descriptor = PyInt_FromLong(self->ktdexp[s]);
+        
 		/* subsets differ by kelem = number of elements. Notice
 		 * that the fill values are from the
 		 * bufr definition.
@@ -582,25 +647,58 @@ static PyObject * BUFRFile_read(_BUFRFile_BUFRFileObject *self) {
             return NULL;
         }
 
-		/* Create bufr enty object and insert object into list */
-		bufr_entry_args = PyTuple_New(4);
-        
-		PyTuple_SetItem(bufr_entry_args,0,index);
-		PyTuple_SetItem(bufr_entry_args,1,name);
-        if(unit) {
-		    PyTuple_SetItem(bufr_entry_args,2, unit);
+
+        /* RB Create char data array */
+        if (strncmp(myunits, "CCIT", 4) == 0) {
+            npy_intp dims[1];
+            dims[0]=nsup;
+            npy_intp strides[1];
+            strides[0] = 80;
+
+            /*
+             * The numerical value for the parameter divided by 1000 is the array index of self->cvals.
+             * When there us more than 1 subset, then get the stride by looking at the diff between offset of subset 1 and 2.
+             */ 
+            double *offsets = (self->values + s*nsup);
+            int offset = (int)(*offsets/1000) - 1;
+            if (nsup > 1) {
+                strides[0] = 80 * ((int)(*(offsets+1)/1000) - 1 - offset);
+            }
+            
+            
+            cdata = PyArray_New(&PyArray_Type, 1, dims, PyArray_STRING, strides, self->cvals+80*offset, 80, 0, NULL);
+            if (cdata == NULL) {
+                PyErr_SetString(_BUFRFile_BUFRFileError, "Unable to allocate character data array");
+                return NULL;
+            }
+            /* End RB */
         }
         else {
-            PyTuple_SetItem(bufr_entry_args,2, Py_BuildValue("s", ""));
+            cdata = Py_None;
+            Py_INCREF(Py_None);  
         }
-		PyTuple_SetItem(bufr_entry_args,3,bdata);
+        
+		/* Create bufr enty object and insert object into list */
+		bufr_entry_args = PyTuple_New(6);
+        
+		PyTuple_SetItem(bufr_entry_args,0,index);
+        PyTuple_SetItem(bufr_entry_args,1,descriptor);
+		PyTuple_SetItem(bufr_entry_args,2,name);
+        if(unit) {
+		    PyTuple_SetItem(bufr_entry_args,3, unit);
+        }
+        else {
+            PyTuple_SetItem(bufr_entry_args,3, Py_BuildValue("s", ""));
+        }
+        PyTuple_SetItem(bufr_entry_args,4,bdata);
+        PyTuple_SetItem(bufr_entry_args,5,cdata);
 
         /* Pass arguments to constructor and deference copy of input arguments */
 		bufr_entry =  PyObject_CallObject((PyObject *) &_BUFRFile_BUFRFileEntryType, bufr_entry_args);
         Py_XDECREF( bufr_entry_args );
 
 		if (PyList_Append(bufr_entries,bufr_entry)) {
-			PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR entry");
+			PyErr_SetString(_BUFRFile_BUFRFileError, "Error reading BUFR entry (PyList_Append)");
 			return NULL;
 		}
         Py_XDECREF(bufr_entry);
@@ -713,6 +811,7 @@ static PyMemberDef _BUFRFile_Members[] = {
     {"minute", T_INT, offsetof(_BUFRFile_BUFRFileObject, minute), 0, "minute"},
     {"master_table", T_INT, offsetof(_BUFRFile_BUFRFileObject, master_table), 0, "master_table"},
     {"master_table_version", T_INT, offsetof(_BUFRFile_BUFRFileObject, master_table_version), 0, "master_table_version"},
+    {"num_subsets", T_INT, offsetof(_BUFRFile_BUFRFileObject, num_subsets), 0, "num_subsets"},
     {NULL}  /* Sentinel */
 };
 
