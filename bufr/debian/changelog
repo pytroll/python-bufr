@@ -1,0 +1,52 @@
+python-bufr (0.2-3) unstable; urgency=low
+
+  * Optimization from Tomas Landelius, only the necessary part of the message
+    is read and unecessary extra copy avoided. 
+  * Spell corrections from Tomas Landelius
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Fri, 17 Feb 2012 14:41:30 +0100
+
+python-bufr (0.2-2) unstable; urgency=low
+
+  * Bugfixes, better error handeling i C code. Errors are due to bad input
+    data.
+  * Allocates more space for message to handle EUMETSAT SSMIS BUFR files
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Wed, 02 Nov 2011 12:29:15 +0100
+
+python-bufr (0.2-1) unstable; urgency=low
+
+  * removed emos dependency
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Thu, 10 Mar 2011 09:46:13 +0000
+
+python-bufr (0.2-0) unstable; urgency=low
+
+  * x64 version working
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 07 Mar 2011 15:23:45 +0000
+
+python-bufr (0.1-8) unstable; urgency=low
+
+  * Buildt aginst new emos 377 library
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Thu, 03 Mar 2011 09:55:38 +0000
+
+python-bufr (0.1-3) unstable; urgency=low
+
+  * Added index to each bufr variable entry and moved functionality for renaming to python code
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Tue, 20 Apr 2010 12:11:58 +0200
+
+python-bufr (0.1-2) unstable; urgency=low
+
+  * Now depends on libemos
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 12 Oct 2009 12:11:58 +0200
+
+python-bufr (0.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Kristian Rune Larsen <krl@dmi.dk>  Mon, 12 Oct 2009 12:11:58 +0200
+
