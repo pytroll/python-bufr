@@ -1,6 +1,9 @@
 python-bufr
 ===========
 
+THIS REPO IS NOT MAINTAINED ANYMORE!
+If you need to read BUFR files, please check out pybufrkit (https://github.com/ywangd/pybufrkit) or eccodes (https://github.com/ecmwf/eccodes).
+
 Introduction
 ============
 
